@@ -120,4 +120,19 @@ static inline bool kvm_vcpu_dabt_iss1tw(struct kvm_vcpu *vcpu)
 	return (kvm_vcpu_get_hsr(vcpu) >> 7) & 1;
 }
 
+static inline int kvm_vcpu_dabt_get_as(struct kvm_vcpu *vcpu)
+{
+	switch ((kvm_vcpu_get_hsr(vcpu) >> 22) & 0x3) {
+	case 0:
+		return 1;
+	case 1:
+		return 2;
+	case 2:
+		return 4;
+	default:
+		kvm_err("Hardware is weird: SAS 0b11 is reserved\n");
+		return -EFAULT;
+	}
+}
+
 #endif /* __ARM_KVM_EMULATE_H__ */
