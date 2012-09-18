@@ -115,4 +115,9 @@ static inline bool kvm_vcpu_dabt_isextabt(struct kvm_vcpu *vcpu)
 	return (kvm_vcpu_get_hsr(vcpu) >> 8) & 1;
 }
 
+static inline bool kvm_vcpu_dabt_iss1tw(struct kvm_vcpu *vcpu)
+{
+	return (kvm_vcpu_get_hsr(vcpu) >> 7) & 1;
+}
+
 #endif /* __ARM_KVM_EMULATE_H__ */
