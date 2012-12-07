@@ -80,7 +80,7 @@ extern pgprot_t pgprot_default;
 #define PAGE_HYP_DEVICE		_MOD_PROT(__pgprot(PROT_DEVICE_nGnRE), PTE_HYP)
 
 #define PAGE_S2			_MOD_PROT(pgprot_default, PTE_S2_RDONLY)
-#define PAGE_S2_DEVICE		_MOD_PROT(__pgprot(PROT_DEVICE_nGnRE), PTE_S2_RDWR)
+#define PAGE_S2_DEVICE		__pgprot_modify(__pgprot(PROT_DEVICE_nGnRE), PTE_PXN, PTE_S2_RDWR)
 
 #define __PAGE_NONE		__pgprot(((_PAGE_DEFAULT) & ~PTE_TYPE_MASK) | PTE_PROT_NONE)
 #define __PAGE_SHARED		__pgprot(_PAGE_DEFAULT | PTE_USER | PTE_NG | PTE_PXN | PTE_UXN)
