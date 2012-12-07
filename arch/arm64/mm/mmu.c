@@ -44,6 +44,7 @@ struct page *empty_zero_page;
 EXPORT_SYMBOL(empty_zero_page);
 
 pgprot_t pgprot_default;
+pgprot_t pgprot_device;
 EXPORT_SYMBOL(pgprot_default);
 
 static pmdval_t prot_sect_kernel;
@@ -127,10 +128,11 @@ early_param("cachepolicy", early_cachepolicy);
  */
 static void __init init_mem_pgprot(void)
 {
-	pteval_t default_pgprot;
+	pteval_t default_pgprot, device_pgprot;
 	int i;
 
 	default_pgprot = PTE_ATTRINDX(MT_NORMAL);
+	device_pgprot = PTE_ATTRINDX(MT_DEVICE_nGnRE) | PTE_PXN | PTE_UXN;
 	prot_sect_kernel = PMD_TYPE_SECT | PMD_SECT_AF | PMD_ATTRINDX(MT_NORMAL);
 
 #ifdef CONFIG_SMP
@@ -138,6 +140,7 @@ static void __init init_mem_pgprot(void)
 	 * Mark memory with the "shared" attribute for SMP systems
 	 */
 	default_pgprot |= PTE_SHARED;
+	device_pgprot |= PTE_SHARED;
 	prot_sect_kernel |= PMD_SECT_S;
 #endif
 
@@ -147,6 +150,7 @@ static void __init init_mem_pgprot(void)
 	}
 
 	pgprot_default = __pgprot(PTE_TYPE_PAGE | PTE_AF | default_pgprot);
+	pgprot_device = __pgprot(PTE_TYPE_PAGE | PTE_AF | device_pgprot);
 }
 
 pgprot_t phys_mem_access_prot(struct file *file, unsigned long pfn,
