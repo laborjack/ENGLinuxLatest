@@ -85,7 +85,10 @@ typedef struct user_fpsimd_state kvm_kernel_vfp_t;
 
 struct kvm_vcpu_arch {
 	struct kvm_regs regs;
-	u64 sys_regs[NR_SYS_REGS];
+	union {
+		u64 sys_regs[NR_SYS_REGS];
+		u32 cp15[NR_CP15_REGS];
+	};
 
 	/* HYP configuration */
 	u64 hcr_el2;
