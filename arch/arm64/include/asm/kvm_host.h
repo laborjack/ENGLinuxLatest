@@ -34,7 +34,7 @@
 #include <kvm/kvm_vgic.h>
 #include <kvm/kvm_arch_timer.h>
 
-#define KVM_VCPU_MAX_FEATURES 1
+#define KVM_VCPU_MAX_FEATURES 2
 
 /* We don't currently support large pages. */
 #define KVM_HPAGE_GFN_SHIFT(x)	0
