@@ -1,0 +1,142 @@
+/*
+ * Applied Micro Ltd. (APM)
+ *
+ * Mustang Evaluation Board
+ */
+
+/dts-v1/;
+
+/memreserve/ 0x100000000 0x00010000;
+
+/include/ "skeleton.dtsi"
+
+/ {
+	model = "mustang";
+	compatible = "arm,storm,potenza", "arm,storm";
+	interrupt-parent = <&gic>;
+	#address-cells = <2>;
+	#size-cells = <1>;
+
+	/* chosen */
+	chosen {
+		linux,stdout-path = "/motherboard/uart@1C020000";
+	};
+
+	aliases {
+		serial0 = &uart0;
+	};
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cpu@0 {
+			device_type = "cpu";
+			compatible = "arm,armv8";
+			reg = <0>;
+			enable-method = "spin-table";
+			cpu-release-addr = <0x1 0x0000fff8>;
+                };  
+                cpu@1 {
+			device_type = "cpu";
+			compatible = "arm,armv8";
+			reg = <1>;
+			enable-method = "spin-table";
+			cpu-release-addr = <0x1 0x0000fff8>;
+		};
+		cpu@2 {
+			device_type = "cpu";
+			compatible = "arm,armv8";
+                        reg = <2>;
+			enable-method = "spin-table";
+			cpu-release-addr = <0x1 0x0000fff8>;
+                };
+		cpu@3 {
+			device_type = "cpu";
+			compatible = "arm,armv8";
+			reg = <3>;
+			enable-method = "spin-table";
+			cpu-release-addr = <0x1 0x0000fff8>;
+                };
+                cpu@4 {
+			device_type = "cpu";
+			compatible = "arm,armv8";
+			reg = <4>;
+			enable-method = "spin-table";
+			cpu-release-addr = <0x1 0x0000fff8>;
+                };
+                cpu@5 {
+			device_type = "cpu";
+			compatible = "arm,armv8";
+			reg = <5>;
+			enable-method = "spin-table";
+			cpu-release-addr = <0x1 0x0000fff8>;
+		};
+		cpu@6 {
+			device_type = "cpu";
+			compatible = "arm,armv8";
+			reg = <6>;
+			enable-method = "spin-table";
+			cpu-release-addr = <0x1 0x0000fff8>;
+		};
+		cpu@7 {
+			device_type = "cpu";
+			compatible = "arm,armv8";
+			reg = <7>;
+			enable-method = "spin-table";
+			cpu-release-addr = <0x1 0x0000fff8>;
+                };
+        };  
+
+	memory {
+		#address-cells = <2>;
+		#size-cells = <1>;
+		device_type = "memory";
+		reg = < 0x01 0x00000000 0x00000000 >;
+        };
+
+	gic: interrupt-controller@2c001000 {
+		compatible = "arm,cortex-a15-gic", "arm,cortex-a9-gic";
+		#interrupt-cells = <3>;
+		#address-cells = <0>;
+		interrupt-controller;
+		reg = <0x0 0x78010000 0x1000>,	/* GIC Dist */
+		      <0x0 0x78020000 0x1000>,	/* GIC CPU */
+		      <0x0 0x78040000 0x2000>,	/* GIC VCPU Control */
+		      <0x0 0x78060000 0x2000>;	/* GIC VCPU */
+		interrupts = <1 9 0xf04>;	/* GIC Maintenence IRQ */
+	};
+
+	timer {
+		compatible = "arm,armv8-timer";
+		interrupts = <1 0 0xff01>,	/* Secure Phys IRQ */
+			     <1 13 0xff01>,	/* Non-secure Phys IRQ */
+			     <1 14 0xff01>,	/* Virt IRQ */
+			     <1 15 0xff01>;	/* Hype IRQ */
+		clock-frequency = <500000>;
+	};
+
+	motherboard {
+		compatible = "simple-bus";
+		#address-cells = <2>; /* SMB chipselect number and offset */
+		#size-cells = <1>; 
+
+		ranges = <0 0 0x0 0x08000000 0x04000000>,
+		         <1 0 0x0 0x14000000 0x04000000>,
+		         <2 0 0x0 0x18000000 0x04000000>,
+		         <3 0 0x0 0x1c000000 0x04000000>,
+		         <4 0 0x0 0x0c000000 0x04000000>,
+		         <5 0 0x0 0x10000000 0x04000000>;
+
+		uart0: uart@1C020000 {
+			device_type = "serial";
+			compatible = "ns16550";
+			reg = <3 0x00020000 0x100>;
+			reg-shift = <2>;
+			clock-frequency = <10000000>;
+			interrupt-parent = <&gic>;
+			interrupts = <0x0 0x4c 0x1>;
+                };  
+	};
+};
+
