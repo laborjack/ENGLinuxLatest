@@ -33,10 +33,13 @@
 })
 
 #define ARM_CPU_IMP_ARM		0x41
+#define ARM_CPU_IMP_APM		0x50
 
 #define ARM_CPU_PART_AEM_V8	0xD0F0
 #define ARM_CPU_PART_FOUNDATION	0xD000
 #define ARM_CPU_PART_CORTEX_A57	0xD070
+
+#define APM_CPU_PART_POTENZA	0x0000
 
 /*
  * The CPU ID never changes at run time, so we might as well tell the
