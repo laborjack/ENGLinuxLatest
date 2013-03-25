@@ -16,6 +16,15 @@
 #ifndef __ASM_CPUTYPE_H
 #define __ASM_CPUTYPE_H
 
+#define ARM_CPU_IMP_ARM		0x41
+#define ARM_CPU_IMP_APM		0x50
+
+#define ARM_CPU_PART_AEM_V8	0xD0F0
+#define ARM_CPU_PART_FOUNDATION	0xD000
+#define ARM_CPU_PART_CORTEX_A57	0xD070
+
+#define APM_CPU_PART_POTENZA	0x0000
+
 #define ID_MIDR_EL1		"midr_el1"
 #define ID_MPIDR_EL1		"mpidr_el1"
 #define ID_CTR_EL0		"ctr_el0"
@@ -26,17 +35,13 @@
 #define ID_AA64ISAR0_EL1	"id_aa64isar0_el1"
 #define ID_AA64MMFR0_EL1	"id_aa64mmfr0_el1"
 
+#ifndef __ASSEMBLY__
+
 #define read_cpuid(reg) ({						\
 	u64 __val;							\
 	asm("mrs	%0, " reg : "=r" (__val));			\
 	__val;								\
 })
-
-#define ARM_CPU_IMP_ARM		0x41
-
-#define ARM_CPU_PART_AEM_V8	0xD0F0
-#define ARM_CPU_PART_FOUNDATION	0xD000
-#define ARM_CPU_PART_CORTEX_A57	0xD070
 
 /*
  * The CPU ID never changes at run time, so we might as well tell the
@@ -67,5 +72,7 @@ static inline u32 __attribute_const__ read_cpuid_cachetype(void)
 {
 	return read_cpuid(ID_CTR_EL0);
 }
+
+#endif
 
 #endif
