@@ -114,6 +114,11 @@ config ARCH_VEXPRESS
 	  This enables support for the ARMv8 software model (Versatile
 	  Express).
 
+config ARCH_STORM
+	bool "AppliedMicro Storm SOC"
+	help
+	  This enables support for AppliedMicro Storm SOC
+
 endmenu
 
 menu "Bus support"
