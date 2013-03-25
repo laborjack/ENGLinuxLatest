@@ -229,10 +229,27 @@ ENTRY(__boot_cpu_mode)
 ENTRY(secondary_holding_pen)
 	bl	__calc_phys_offset		// x24=phys offset
 	bl	el2_setup			// Drop to EL1
-	mrs	x0, mpidr_el1
+
+	mrs	x0, midr_el1
+	lsr	x0, x0, #24
+	cmp	x0, #ARM_CPU_IMP_APM
+	b.eq	apm_imp
+
+	mrs	x0, mpidr_el1			// ARM Implementor (Default)
 	ldr     x1, =MPIDR_HWID_BITMASK
 	and	x0, x0, x1
-	adr	x1, 1b
+	b	next
+
+apm_imp:					// APM Implementor
+ 	mrs	x0, mpidr_el1
+	and     x0, x0, #0xffff                 
+	and     x1, x0, #0x1
+	and     x0, x0, #0xff00
+	lsr     x0, x0, #7
+	orr     x0, x0, x1
+	b	next
+
+next:	adr	x1, 1b
 	ldp	x2, x3, [x1]
 	sub	x1, x1, x2
 	add	x3, x3, x1
