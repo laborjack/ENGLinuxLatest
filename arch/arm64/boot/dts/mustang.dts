@@ -1,0 +1,22 @@
+/*
+ * AppliedMicro (APM) Mustang Board
+ */
+
+/dts-v1/;
+
+/include/ "storm.dtsi"
+
+/ {
+	model = "mustang";
+
+	/* chosen */
+	chosen {
+		linux,stdout-path = &SERIAL0;
+	};
+
+	memory {
+		device_type = "memory";
+		reg = < 0x1 0x00000000 0x0 0x80000000 >; /* Updated by bootloader */
+        };
+};
+
