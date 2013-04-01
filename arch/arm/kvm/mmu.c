@@ -112,6 +112,31 @@ static void free_hyp_pgd_entry(pgd_t *pgdp, unsigned long addr)
 }
 
 /**
+ * free_boot_hyp_pgd - free HYP boot page tables
+ *
+ * Free the HYP boot page tables. The bounce page is also freed.
+ */
+void free_boot_hyp_pgd(void)
+{
+	mutex_lock(&kvm_hyp_pgd_mutex);
+
+	if (boot_hyp_pgd) {
+		free_hyp_pgd_entry(boot_hyp_pgd, hyp_idmap_start);
+		free_hyp_pgd_entry(boot_hyp_pgd, TRAMPOLINE_VA);
+		kfree(boot_hyp_pgd);
+		boot_hyp_pgd = NULL;
+	}
+
+	if (hyp_pgd)
+		free_hyp_pgd_entry(hyp_pgd, TRAMPOLINE_VA);
+
+	kfree(init_bounce_page);
+	init_bounce_page = NULL;
+
+	mutex_unlock(&kvm_hyp_pgd_mutex);
+}
+
+/**
  * free_hyp_pgds - free Hyp-mode page tables
  *
  * Assumes hyp_pgd is a page table used strictly in Hyp-mode and
@@ -125,13 +150,9 @@ void free_hyp_pgds(void)
 {
 	unsigned long addr;
 
-	mutex_lock(&kvm_hyp_pgd_mutex);
+	free_boot_hyp_pgd();
 
-	if (boot_hyp_pgd) {
-		free_hyp_pgd_entry(boot_hyp_pgd, hyp_idmap_start);
-		free_hyp_pgd_entry(boot_hyp_pgd, TRAMPOLINE_VA);
-		kfree(boot_hyp_pgd);
-	}
+	mutex_lock(&kvm_hyp_pgd_mutex);
 
 	if (hyp_pgd) {
 		for (addr = PAGE_OFFSET; virt_addr_valid(addr); addr += PGDIR_SIZE)
@@ -139,9 +160,9 @@ void free_hyp_pgds(void)
 		for (addr = VMALLOC_START; is_vmalloc_addr((void*)addr); addr += PGDIR_SIZE)
 			free_hyp_pgd_entry(hyp_pgd, KERN_TO_HYP(addr));
 		kfree(hyp_pgd);
+		hyp_pgd = NULL;
 	}
 
-	kfree(init_bounce_page);
 	mutex_unlock(&kvm_hyp_pgd_mutex);
 }
 

@@ -16,6 +16,7 @@
  * Foundation, 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <linux/cpu.h>
 #include <linux/errno.h>
 #include <linux/err.h>
 #include <linux/kvm_host.h>
@@ -794,7 +795,7 @@ long kvm_arch_vm_ioctl(struct file *filp,
 	}
 }
 
-static void cpu_init_hyp_mode(void *vector)
+static void cpu_init_hyp_mode(void *dummy)
 {
 	unsigned long long boot_pgd_ptr;
 	unsigned long long pgd_ptr;
@@ -814,12 +815,28 @@ static void cpu_init_hyp_mode(void *vector)
 	__cpu_init_hyp_mode(boot_pgd_ptr, pgd_ptr, hyp_stack_ptr, vector_ptr);
 }
 
+static int hyp_init_cpu_notify(struct notifier_block *self,
+			       unsigned long action, void *cpu)
+{
+	switch (action) {
+	case CPU_STARTING:
+	case CPU_STARTING_FROZEN:
+		cpu_init_hyp_mode(NULL);
+		break;
+	}
+
+	return NOTIFY_OK;
+}
+
+static struct notifier_block hyp_init_cpu_nb = {
+	.notifier_call = hyp_init_cpu_notify,
+};
+
 /**
  * Inits Hyp-mode on all online CPUs
  */
 static int init_hyp_mode(void)
 {
-	phys_addr_t init_phys_addr;
 	int cpu;
 	int err = 0;
 
@@ -849,19 +866,6 @@ static int init_hyp_mode(void)
 		}
 
 		per_cpu(kvm_arm_hyp_stack_page, cpu) = stack_page;
-	}
-
-	/*
-	 * Execute the init code on each CPU.
-	 *
-	 * Note: The stack is not mapped yet, so don't do anything else than
-	 * initializing the hypervisor mode on each CPU using a local stack
-	 * space for temporary storage.
-	 */
-	init_phys_addr = virt_to_phys(__kvm_hyp_init);
-	for_each_online_cpu(cpu) {
-		smp_call_function_single(cpu, cpu_init_hyp_mode,
-					 (void *)(long)init_phys_addr, 1);
 	}
 
 	/*
@@ -909,6 +913,11 @@ static int init_hyp_mode(void)
 	}
 
 	/*
+	 * Execute the init code on each CPU.
+	 */
+	on_each_cpu(cpu_init_hyp_mode, NULL, 1);
+
+	/*
 	 * Init HYP view of VGIC
 	 */
 	err = kvm_vgic_hyp_init();
@@ -925,6 +934,10 @@ static int init_hyp_mode(void)
 	err = kvm_timer_hyp_init();
 	if (err)
 		goto out_free_mappings;
+
+#ifndef CONFIG_HOTPLUG_CPU
+	free_boot_hyp_pgd();
+#endif
 
 	kvm_perf_init();
 
@@ -963,6 +976,12 @@ int kvm_arch_init(void *opaque)
 	err = init_hyp_mode();
 	if (err)
 		goto out_err;
+
+	err = register_cpu_notifier(&hyp_init_cpu_nb);
+	if (err) {
+		kvm_err("Cannot register HYP init CPU notifier (%d)\n", err);
+		goto out_err;
+	}
 
 	kvm_coproc_table_init();
 	return 0;
