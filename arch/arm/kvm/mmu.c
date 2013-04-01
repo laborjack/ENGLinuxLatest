@@ -32,6 +32,7 @@
 
 extern char  __hyp_idmap_text_start[], __hyp_idmap_text_end[];
 
+static pgd_t *boot_hyp_pgd;
 static pgd_t *hyp_pgd;
 static DEFINE_MUTEX(kvm_hyp_pgd_mutex);
 
@@ -111,12 +112,20 @@ static void free_hyp_pgd_entry(pgd_t *pgdp, unsigned long addr)
  * Assumes hyp_pgd is a page table used strictly in Hyp-mode and therefore contains
  * either mappings in the kernel memory area (above PAGE_OFFSET), or
  * device mappings in the vmalloc range (from VMALLOC_START to VMALLOC_END).
+ *
+ * boot_hyp_pgd should only map two pages for the init code.
  */
 void free_hyp_pgds(void)
 {
 	unsigned long addr;
 
 	mutex_lock(&kvm_hyp_pgd_mutex);
+
+	if (boot_hyp_pgd) {
+		free_hyp_pgd_entry(boot_hyp_pgd, virt_to_phys(__hyp_idmap_text_start));
+		free_hyp_pgd_entry(boot_hyp_pgd, TRAMPOLINE_VA);
+		kfree(boot_hyp_pgd);
+	}
 
 	if (hyp_pgd) {
 		for (addr = PAGE_OFFSET; virt_addr_valid(addr); addr += PGDIR_SIZE)
@@ -718,6 +727,12 @@ phys_addr_t kvm_mmu_get_httbr(void)
 	return virt_to_phys(hyp_pgd);
 }
 
+phys_addr_t kvm_mmu_get_boot_httbr(void)
+{
+	VM_BUG_ON(!virt_addr_valid(boot_hyp_pgd));
+	return virt_to_phys(boot_hyp_pgd);
+}
+
 int kvm_mmu_init(void)
 {
 	unsigned long hyp_idmap_start = virt_to_phys(__hyp_idmap_text_start);
@@ -725,7 +740,8 @@ int kvm_mmu_init(void)
 	int err;
 
 	hyp_pgd = kzalloc(PTRS_PER_PGD * sizeof(pgd_t), GFP_KERNEL);
-	if (!hyp_pgd) {
+	boot_hyp_pgd = kzalloc(PTRS_PER_PGD * sizeof(pgd_t), GFP_KERNEL);
+	if (!hyp_pgd || !boot_hyp_pgd) {
 		kvm_err("Hyp mode PGD not allocated\n");
 		err = -ENOMEM;
 		goto out;
@@ -743,39 +759,30 @@ int kvm_mmu_init(void)
 		goto out;
 	}
 
+	/* Map the very same page at the trampoline VA */
+	err = 	__create_hyp_mappings(boot_hyp_pgd,
+				      TRAMPOLINE_VA, TRAMPOLINE_VA + PAGE_SIZE,
+				      __phys_to_pfn(hyp_idmap_start),
+				      PAGE_HYP);
+	if (err) {
+		kvm_err("Failed to map trampoline @%lx into boot HYP pgd\n",
+			TRAMPOLINE_VA);
+		goto out;
+	}
+
+	/* Map the same page again into the runtime page tables */
+	err = 	__create_hyp_mappings(hyp_pgd,
+				      TRAMPOLINE_VA, TRAMPOLINE_VA + PAGE_SIZE,
+				      __phys_to_pfn(hyp_idmap_start),
+				      PAGE_HYP);
+	if (err) {
+		kvm_err("Failed to map trampoline @%lx into runtime HYP pgd\n",
+			TRAMPOLINE_VA);
+		goto out;
+	}
+
 	return 0;
 out:
 	free_hyp_pgds();
 	return err;
-}
-
-/**
- * kvm_clear_idmap - remove all idmaps from the hyp pgd
- *
- * Free the underlying pmds for all pgds in range and clear the pgds (but
- * don't free them) afterwards.
- */
-void kvm_clear_hyp_idmap(void)
-{
-	unsigned long addr, end;
-	unsigned long next;
-	pgd_t *pgd = hyp_pgd;
-	pud_t *pud;
-	pmd_t *pmd;
-
-	addr = virt_to_phys(__hyp_idmap_text_start);
-	end = virt_to_phys(__hyp_idmap_text_end);
-
-	pgd += pgd_index(addr);
-	do {
-		next = pgd_addr_end(addr, end);
-		if (pgd_none_or_clear_bad(pgd))
-			continue;
-		pud = pud_offset(pgd, addr);
-		pmd = pmd_offset(pud, addr);
-
-		pud_clear(pud);
-		kvm_clean_pmd_entry(pmd);
-		pmd_free(NULL, (pmd_t *)((unsigned long)pmd & PAGE_MASK));
-	} while (pgd++, addr = next, addr < end);
 }
