@@ -111,4 +111,11 @@ __do_hyp_init:
 	.globl __kvm_hyp_init_end
 __kvm_hyp_init_end:
 
+	/*
+	 * The above code *must* fit in a single page for the trampoline
+	 * madness to work. Whoever decides to change it must make sure
+	 * we map the right amount of memory for the trampoline to work.
+	 * The line below ensures any breakage will get noticed.
+	 */
+	.org	__kvm_hyp_init + PAGE_SIZE
 	.popsection
