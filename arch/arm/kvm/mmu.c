@@ -77,7 +77,7 @@ static void free_ptes(pmd_t *pmd, unsigned long addr)
 	pte_t *pte;
 	unsigned int i;
 
-	for (i = 0; i < PTRS_PER_PMD; i++, addr += PMD_SIZE) {
+	for (i = pmd_index(addr); i < PTRS_PER_PMD; i++, addr += PMD_SIZE) {
 		if (!pmd_none(*pmd) && pmd_table(*pmd)) {
 			pte = pte_offset_kernel(pmd, addr);
 			pte_free_kernel(NULL, pte);
@@ -86,42 +86,46 @@ static void free_ptes(pmd_t *pmd, unsigned long addr)
 	}
 }
 
-static void free_hyp_pgd_entry(unsigned long addr)
+static void free_hyp_pgd_entry(pgd_t *pgdp, unsigned long addr)
 {
 	pgd_t *pgd;
 	pud_t *pud;
 	pmd_t *pmd;
-	unsigned long hyp_addr = KERN_TO_HYP(addr);
 
-	pgd = hyp_pgd + pgd_index(hyp_addr);
-	pud = pud_offset(pgd, hyp_addr);
+	pgd = pgdp + pgd_index(addr);
+	pud = pud_offset(pgd, addr);
 
 	if (pud_none(*pud))
 		return;
 	BUG_ON(pud_bad(*pud));
 
-	pmd = pmd_offset(pud, hyp_addr);
+	pmd = pmd_offset(pud, addr);
 	free_ptes(pmd, addr);
-	pmd_free(NULL, pmd);
+	pmd_free(NULL, pmd - pmd_index(addr));
 	pud_clear(pud);
 }
 
 /**
- * free_hyp_pmds - free a Hyp-mode level-2 tables and child level-3 tables
+ * free_hyp_pgds - free Hyp-mode page tables
  *
- * Assumes this is a page table used strictly in Hyp-mode and therefore contains
+ * Assumes hyp_pgd is a page table used strictly in Hyp-mode and therefore contains
  * either mappings in the kernel memory area (above PAGE_OFFSET), or
  * device mappings in the vmalloc range (from VMALLOC_START to VMALLOC_END).
  */
-void free_hyp_pmds(void)
+void free_hyp_pgds(void)
 {
 	unsigned long addr;
 
 	mutex_lock(&kvm_hyp_pgd_mutex);
-	for (addr = PAGE_OFFSET; virt_addr_valid(addr); addr += PGDIR_SIZE)
-		free_hyp_pgd_entry(addr);
-	for (addr = VMALLOC_START; is_vmalloc_addr((void*)addr); addr += PGDIR_SIZE)
-		free_hyp_pgd_entry(addr);
+
+	if (hyp_pgd) {
+		for (addr = PAGE_OFFSET; virt_addr_valid(addr); addr += PGDIR_SIZE)
+			free_hyp_pgd_entry(hyp_pgd, KERN_TO_HYP(addr));
+		for (addr = VMALLOC_START; is_vmalloc_addr((void*)addr); addr += PGDIR_SIZE)
+			free_hyp_pgd_entry(hyp_pgd, KERN_TO_HYP(addr));
+		kfree(hyp_pgd);
+	}
+
 	mutex_unlock(&kvm_hyp_pgd_mutex);
 }
 
@@ -741,7 +745,7 @@ int kvm_mmu_init(void)
 
 	return 0;
 out:
-	kfree(hyp_pgd);
+	free_hyp_pgds();
 	return err;
 }
 
