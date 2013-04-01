@@ -165,14 +165,14 @@ void free_boot_hyp_pgd(void)
 	mutex_lock(&kvm_hyp_pgd_mutex);
 
 	if (boot_hyp_pgd) {
-		free_hyp_pgd_entry(boot_hyp_pgd, hyp_idmap_start);
-		free_hyp_pgd_entry(boot_hyp_pgd, TRAMPOLINE_VA);
+		unmap_range(boot_hyp_pgd, hyp_idmap_start, PAGE_SIZE);
+		unmap_range(boot_hyp_pgd, TRAMPOLINE_VA, PAGE_SIZE);
 		kfree(boot_hyp_pgd);
 		boot_hyp_pgd = NULL;
 	}
 
 	if (hyp_pgd)
-		free_hyp_pgd_entry(hyp_pgd, TRAMPOLINE_VA);
+		unmap_range(hyp_pgd, TRAMPOLINE_VA, PAGE_SIZE);
 
 	kfree(init_bounce_page);
 	init_bounce_page = NULL;
