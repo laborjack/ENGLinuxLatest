@@ -21,6 +21,7 @@
 #include <asm/asm-offsets.h>
 #include <asm/kvm_asm.h>
 #include <asm/kvm_arm.h>
+#include <asm/kvm_mmu.h>
 
 /********************************************************************
  * Hypervisor initialization
@@ -47,6 +48,9 @@ __kvm_hyp_init:
 	W(b)	.
 
 __do_hyp_init:
+	cmp	r2, #0			@ We have a SP?
+	bne	phase2			@ Yes, second stage init
+
 	@ Set the HTTBR to point to the hypervisor PGD pointer passed
 	mcrr	p15, 4, r0, r1, c2
 
@@ -96,13 +100,34 @@ __do_hyp_init:
 	orr	r0, r0, r1
 	isb
 	mcr	p15, 4, r0, c1, c0, 0	@ HSCR
-	isb
 
-	@ Set stack pointer and return to the kernel
+	eret
+
+phase2:
+	@ Set stack pointer
 	mov	sp, r2
 
 	@ Set HVBAR to point to the HYP vectors
 	mcr	p15, 4, r3, c12, c0, 0	@ HVBAR
+
+	@ Jump to the trampoline page
+	ldr	r2, =#PAGE_MASK
+	adr	r3, target
+	bic	r3, r3, r2
+	ldr	r2, =#TRAMPOLINE_VA
+	add	r3, r3, r2
+	mov	pc, r3
+
+	nop
+
+target:	@ We're now in the trampoline code, switch page tables
+	mcrr	p15, 4, r0, r1, c2
+	isb
+
+	@ Invalidate the old TLBs
+	mcr	p15, 4, r0, c8, c7, 0	@ TLBIALLH
+	dsb
+	isb
 
 	eret
 
@@ -111,4 +136,11 @@ __do_hyp_init:
 	.globl __kvm_hyp_init_end
 __kvm_hyp_init_end:
 
+	/*
+	 * The above code *must* fit in a single page for the trampoline
+	 * madness to work. Whoever decides to change it must make sure
+	 * we map the right amount of memory for the trampoline to work.
+	 * The line below ensures any breakage will get noticed.
+	 */
+	.org	__kvm_hyp_init + PAGE_SIZE
 	.popsection
