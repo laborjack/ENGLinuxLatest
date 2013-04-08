@@ -21,6 +21,7 @@
 #include <asm/asm-offsets.h>
 #include <asm/kvm_asm.h>
 #include <asm/kvm_arm.h>
+#include <asm/kvm_mmu.h>
 
 /********************************************************************
  * Hypervisor initialization
@@ -28,6 +29,25 @@
  *       r0,r1 = Hypervisor pgd pointer
  *       r2 = top of Hyp stack (kernel VA)
  *       r3 = pointer to hyp vectors
+ *
+ * The init scenario is:
+ * - We jump in HYP with four parameters: boot HYP pgd, runtime HYP pgd,
+ *   runtime stack, runtime vectors
+ * - Enable the MMU with the boot pgd
+ * - Jump to a target into the trampoline page (remember, this is the same
+ *   physical page!)
+ * - Now switch to the runtime pgd (same VA, and still the same physical
+ *   page!)
+ * - Invalidate TLBs
+ * - Set stack and vectors
+ * - Profit! (or eret, if you only care about the code).
+ *
+ * As we only have four registers available to pass parameters (and we
+ * need six), we split the init in two phases:
+ * - Phase 1: r0,r1 contain the boot PGD, r2 = 0, r3 = 0.
+ *   Provides the basic HYP init, and enable the MMU.
+ * - Phase 2: r0,r1 contain the runtime PGD, r2 = ToS, r3 = vectors
+ *   Switches to the runtime PGD, set stack and vectors.
  */
 
 	.text
@@ -47,6 +67,9 @@ __kvm_hyp_init:
 	W(b)	.
 
 __do_hyp_init:
+	cmp	r2, #0			@ We have a SP?
+	bne	phase2			@ Yes, second stage init
+
 	@ Set the HTTBR to point to the hypervisor PGD pointer passed
 	mcrr	p15, 4, r0, r1, c2
 
@@ -96,13 +119,30 @@ __do_hyp_init:
 	orr	r0, r0, r1
 	isb
 	mcr	p15, 4, r0, c1, c0, 0	@ HSCR
-	isb
 
-	@ Set stack pointer and return to the kernel
+	@ End of init phase-1
+	eret
+
+phase2:
+	@ Set stack pointer
 	mov	sp, r2
 
 	@ Set HVBAR to point to the HYP vectors
 	mcr	p15, 4, r3, c12, c0, 0	@ HVBAR
+
+	@ Jump to the trampoline page
+	ldr	r2, =TRAMPOLINE_VA
+	adr	r3, target
+	bfi	r2, r3, #0, #PAGE_SHIFT
+	mov	pc, r2
+
+target:	@ We're now in the trampoline code, switch page tables
+	mcrr	p15, 4, r0, r1, c2
+	isb
+
+	@ Invalidate the old TLBs
+	mcr	p15, 4, r0, c8, c7, 0	@ TLBIALLH
+	dsb
 
 	eret
 
