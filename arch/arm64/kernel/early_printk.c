@@ -53,6 +53,19 @@ static void smh_printch(char ch)
 }
 
 /*
+ * VIRTIO mmio based debug console
+*/
+
+#define VIRTIO_MMIO_CONFIG_SIZE 0x100
+#define VIRTIO_EARLY_UART_TX    0x16
+
+static void virtio_mmio_early_printch(char ch)
+{
+	writeb_relaxed(ch, early_base + VIRTIO_MMIO_CONFIG_SIZE +
+			VIRTIO_EARLY_UART_TX);
+}
+
+/*
  * 8250/16550 (8-bit aligned registers) single character TX.
  */
 static void uart8250_8bit_printch(char ch)
@@ -82,6 +95,7 @@ static const struct earlycon_match earlycon_match[] __initconst = {
 	{ .name = "smh", .printch = smh_printch, },
 	{ .name = "uart8250-8bit", .printch = uart8250_8bit_printch, },
 	{ .name = "uart8250-32bit", .printch = uart8250_32bit_printch, },
+	{ .name = "virtio-mmio-early", .printch = virtio_mmio_early_printch, },
 	{}
 };
 
