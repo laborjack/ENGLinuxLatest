@@ -647,8 +647,11 @@ static ssize_t __send_to_port(struct port *port, struct scatterlist *sg,
 	 * we need to kmalloc a GFP_ATOMIC buffer each time the
 	 * console driver writes something out.
 	 */
-	while (!virtqueue_get_buf(out_vq, &len))
+	while (!virtqueue_get_buf(out_vq, &len)) {
 		cpu_relax();
+		/* Re-notify host, in-case the host did not notice it. */
+		virtqueue_kick(out_vq);
+	}
 done:
 	spin_unlock_irqrestore(&port->outvq_lock, flags);
 
