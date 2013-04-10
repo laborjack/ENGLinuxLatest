@@ -111,9 +111,9 @@
 #define VTCR_EL2_SH0_MASK	(3 << 12)
 #define VTCR_EL2_SH0_INNER	(3 << 12)
 #define VTCR_EL2_ORGN0_MASK	(3 << 10)
-#define VTCR_EL2_ORGN0_WBWA	(3 << 10)
+#define VTCR_EL2_ORGN0_WBWA	(1 << 10)
 #define VTCR_EL2_IRGN0_MASK	(3 << 8)
-#define VTCR_EL2_IRGN0_WBWA	(3 << 8)
+#define VTCR_EL2_IRGN0_WBWA	(1 << 8)
 #define VTCR_EL2_SL0_MASK	(3 << 6)
 #define VTCR_EL2_SL0_LVL1	(1 << 6)
 #define VTCR_EL2_T0SZ_MASK	0x3f
