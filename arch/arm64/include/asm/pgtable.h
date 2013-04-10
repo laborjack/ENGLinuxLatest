@@ -79,7 +79,7 @@ extern pgprot_t pgprot_default;
 #define PAGE_HYP		_MOD_PROT(pgprot_default, PTE_HYP)
 #define PAGE_HYP_DEVICE		_MOD_PROT(__pgprot(PROT_DEVICE_nGnRE), PTE_HYP)
 
-#define PAGE_S2			_MOD_PROT(pgprot_default, PTE_USER | PTE_S2_RDONLY)
+#define PAGE_S2			_MOD_PROT(__pgprot(PTE_TYPE_PAGE | PTE_AF | PTE_SHARED | PTE_S2_MEMATTR(0xF)), PTE_USER | PTE_S2_RDONLY)
 #define PAGE_S2_DEVICE		_MOD_PROT(__pgprot(PROT_DEVICE_nGnRE), PTE_USER | PTE_S2_RDWR)
 
 #define __PAGE_NONE		__pgprot(((_PAGE_DEFAULT) & ~PTE_TYPE_MASK) | PTE_PROT_NONE)
@@ -156,9 +156,12 @@ PTE_BIT_FUNC(mkold,     &= ~PTE_AF);
 PTE_BIT_FUNC(mkyoung,   |= PTE_AF);
 PTE_BIT_FUNC(mkspecial, |= PTE_SPECIAL);
 
+extern void __flush_dcache_area(void *addr, size_t len);
+
 static inline void set_pte(pte_t *ptep, pte_t pte)
 {
 	*ptep = pte;
+	__flush_dcache_area(ptep, sizeof(pte_t));
 }
 
 extern void __sync_icache_dcache(pte_t pteval, unsigned long addr);
@@ -212,6 +215,7 @@ extern pgprot_t phys_mem_access_prot(struct file *file, unsigned long pfn,
 static inline void set_pmd(pmd_t *pmdp, pmd_t pmd)
 {
 	*pmdp = pmd;
+	__flush_dcache_area(pmdp, sizeof(pmd_t));
 	dsb();
 }
 
@@ -242,6 +246,7 @@ static inline pte_t *pmd_page_vaddr(pmd_t pmd)
 static inline void set_pud(pud_t *pudp, pud_t pud)
 {
 	*pudp = pud;
+	__flush_dcache_area(pudp, sizeof(pud_t));
 	dsb();
 }
 
