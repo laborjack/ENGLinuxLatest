@@ -120,6 +120,7 @@ static inline void kvm_clean_pte(pte_t *pte) {}
 static inline void kvm_set_s2pte_writable(pte_t *pte)
 {
 	pte_val(*pte) |= PTE_S2_RDWR;
+	__flush_dcache_area(pte, sizeof(pte_t));
 }
 
 struct kvm;
@@ -128,6 +129,7 @@ static inline void coherent_icache_guest_page(struct kvm *kvm, gfn_t gfn)
 {
 	unsigned long hva = gfn_to_hva(kvm, gfn);
 	flush_icache_range(hva, hva + PAGE_SIZE);
+	__flush_dcache_area((void *)hva, PAGE_SIZE);
 }
 
 #define kvm_flush_dcache_to_poc(a,l)	__flush_dcache_area((a), (l))
