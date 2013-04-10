@@ -26,6 +26,7 @@
 			enable-method = "spin-table";
 			cpu-release-addr = <0x1 0x0000fff8>;
 		};
+/*
 		cpu@2 {
 			device_type = "cpu";
 			compatible = "arm,armv8";
@@ -68,6 +69,7 @@
 			enable-method = "spin-table";
 			cpu-release-addr = <0x1 0x0000fff8>;
                 };
+*/
         };  
 
 	gic: interrupt-controller@2c001000 {
