@@ -51,10 +51,22 @@ extern void pgd_free(struct mm_struct *mm, pgd_t *pgd);
 
 #define PGALLOC_GFP	(GFP_KERNEL | __GFP_NOTRACK | __GFP_REPEAT | __GFP_ZERO)
 
+static inline void clean_pte_table(pte_t *pte)
+{
+	__flush_dcache_area(pte + PTE_HWTABLE_PTRS, PTE_HWTABLE_SIZE);
+}
+
 static inline pte_t *
 pte_alloc_one_kernel(struct mm_struct *mm, unsigned long addr)
 {
-	return (pte_t *)__get_free_page(PGALLOC_GFP);
+	pte_t *pte;
+
+	pte = (pte_t *)__get_free_page(PGALLOC_GFP);
+
+	if (pte)
+                clean_pte_table(pte);
+
+	return pte;
 }
 
 static inline pgtable_t
@@ -63,8 +75,10 @@ pte_alloc_one(struct mm_struct *mm, unsigned long addr)
 	struct page *pte;
 
 	pte = alloc_pages(PGALLOC_GFP, 0);
-	if (pte)
+	if (pte) {
+		clean_pte_table(page_address(pte));
 		pgtable_page_ctor(pte);
+	}
 
 	return pte;
 }

@@ -26,6 +26,10 @@
 #define PTRS_PER_PMD		512
 #define PTRS_PER_PGD		512
 
+#define PTE_HWTABLE_PTRS	(PTRS_PER_PTE)
+#define PTE_HWTABLE_OFF		(0)
+#define PTE_HWTABLE_SIZE	(PTRS_PER_PTE * sizeof(u64))
+
 /*
  * PGDIR_SHIFT determines the size a top-level page table entry can map.
  */
