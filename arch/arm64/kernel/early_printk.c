@@ -25,6 +25,9 @@
 
 #include <linux/amba/serial.h>
 #include <linux/serial_reg.h>
+#include <linux/virtio_ids.h>
+#include <linux/virtio_mmio.h>
+#include <linux/virtio_console.h>
 
 static void __iomem *early_base;
 static void (*printch)(char ch);
@@ -50,6 +53,26 @@ static void smh_printch(char ch)
 		     "mov  x0, #3\n"
 		     "hlt  0xf000\n"
 		     : : "r" (&ch) : "x0", "x1", "memory");
+}
+
+/*
+ * VIRTIO MMIO based debug console.
+ */
+static void virtio_console_early_printch(char ch)
+{
+	u32 tmp;
+	struct virtio_console_config *p = early_base + VIRTIO_MMIO_CONFIG;
+
+	tmp = readl_relaxed(early_base + VIRTIO_MMIO_DEVICE_ID);
+	if (tmp != VIRTIO_ID_CONSOLE) {
+		return;
+	}
+
+	tmp = readl_relaxed(early_base + VIRTIO_MMIO_HOST_FEATURES);
+	if (!(tmp & (1 << VIRTIO_CONSOLE_F_EARLY_WRITE))) {
+		return;
+	}
+	writeb_relaxed(ch, &p->early_rw);
 }
 
 /*
@@ -82,6 +105,7 @@ static const struct earlycon_match earlycon_match[] __initconst = {
 	{ .name = "smh", .printch = smh_printch, },
 	{ .name = "uart8250-8bit", .printch = uart8250_8bit_printch, },
 	{ .name = "uart8250-32bit", .printch = uart8250_32bit_printch, },
+	{ .name = "virtio-console", .printch = virtio_console_early_printch, },
 	{}
 };
 

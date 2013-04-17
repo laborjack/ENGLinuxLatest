@@ -38,6 +38,8 @@
 /* Feature bits */
 #define VIRTIO_CONSOLE_F_SIZE	0	/* Does host provide console size? */
 #define VIRTIO_CONSOLE_F_MULTIPORT 1	/* Does host provide multiple ports? */
+#define VIRTIO_CONSOLE_F_EARLY_READ 2	/* Does host support early read? */
+#define VIRTIO_CONSOLE_F_EARLY_WRITE 3	/* Does host support early write? */
 
 #define VIRTIO_CONSOLE_BAD_ID		(~(u32)0)
 
@@ -48,6 +50,8 @@ struct virtio_console_config {
 	__u16 rows;
 	/* max. number of ports this device can hold */
 	__u32 max_nr_ports;
+	/* early read/write register */
+	__u32 early_rw;
 } __attribute__((packed));
 
 /*
