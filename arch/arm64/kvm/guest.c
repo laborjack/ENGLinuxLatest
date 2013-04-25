@@ -202,8 +202,13 @@ int __attribute_const__ kvm_target_cpu(void)
 	unsigned long implementor = read_cpuid_implementor();
 	unsigned long part_number = read_cpuid_part_number();
 
-	if (implementor != ARM_CPU_IMP_ARM)
-		return -EINVAL;
+	switch (implementor) {
+	case ARM_CPU_IMP_ARM:
+	case ARM_CPU_IMP_APM:
+		break;
+	default:
+ 		return -EINVAL;
+	}
 
 	switch (part_number) {
 	case ARM_CPU_PART_AEM_V8:
@@ -211,6 +216,7 @@ int __attribute_const__ kvm_target_cpu(void)
 	case ARM_CPU_PART_FOUNDATION:
 		return KVM_ARM_TARGET_FOUNDATION_V8;
 	case ARM_CPU_PART_CORTEX_A57:
+	case APM_CPU_PART_POTENZA:
 		/* Currently handled by the generic backend */
 		return KVM_ARM_TARGET_CORTEX_A57;
 	default:
