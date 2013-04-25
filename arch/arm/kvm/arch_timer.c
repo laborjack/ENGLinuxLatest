@@ -30,8 +30,16 @@
 
 static struct timecounter *timecounter;
 static struct workqueue_struct *wqueue;
-static struct kvm_irq_level timer_irq = {
+static struct kvm_irq_level host_timer_irq = {
 	.level	= 1,
+};
+
+/* Guest virtual timer irq number will be based on type of guest we emulate. 
+ * For Cortex-A15 & Cortex-A57 guest, virtual timer irq is 27
+ */
+static struct kvm_irq_level guest_timer_irq = {
+	.irq = 27,
+	.level = 1,
 };
 
 static cycle_t kvm_phys_timer_read(void)
@@ -163,12 +171,12 @@ void kvm_timer_vcpu_init(struct kvm_vcpu *vcpu)
 	INIT_WORK(&timer->expired, kvm_timer_inject_irq_work);
 	hrtimer_init(&timer->timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
 	timer->timer.function = kvm_timer_expire;
-	timer->irq = &timer_irq;
+	timer->irq = &guest_timer_irq;
 }
 
 static void kvm_timer_init_interrupt(void *info)
 {
-	enable_percpu_irq(timer_irq.irq, 0);
+	enable_percpu_irq(host_timer_irq.irq, 0);
 }
 
 
@@ -182,7 +190,7 @@ static int kvm_timer_cpu_notify(struct notifier_block *self,
 		break;
 	case CPU_DYING:
 	case CPU_DYING_FROZEN:
-		disable_percpu_irq(timer_irq.irq);
+		disable_percpu_irq(host_timer_irq.irq);
 		break;
 	}
 
@@ -230,7 +238,7 @@ int kvm_timer_hyp_init(void)
 		goto out;
 	}
 
-	timer_irq.irq = ppi;
+	host_timer_irq.irq = ppi;
 
 	err = register_cpu_notifier(&kvm_timer_cpu_nb);
 	if (err) {
