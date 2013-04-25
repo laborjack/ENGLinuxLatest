@@ -1,0 +1,110 @@
+/*
+ * AppliedMicro (APM) X-Gene Storm SOC 
+ */
+
+/ {
+	compatible = "apm,xgene,storm", "apm,xgene";
+	interrupt-parent = <&gic>;
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cpu@0 {
+			device_type = "cpu";
+			compatible = "arm,armv8";
+			reg = <0x0 0x0000>;
+			enable-method = "spin-table";
+			cpu-release-addr = <0x1 0x0000fff8>;
+                };  
+                cpu@1 {
+			device_type = "cpu";
+			compatible = "arm,armv8";
+			reg = <0x0 0x0001>;
+			enable-method = "spin-table";
+			cpu-release-addr = <0x1 0x0000fff8>;
+		};
+		cpu@2 {
+			device_type = "cpu";
+			compatible = "arm,armv8";
+			reg = <0x0 0x0100>;
+			enable-method = "spin-table";
+			cpu-release-addr = <0x1 0x0000fff8>;
+                };
+		cpu@3 {
+			device_type = "cpu";
+			compatible = "arm,armv8";
+			reg = <0x0 0x0101>;
+			enable-method = "spin-table";
+			cpu-release-addr = <0x1 0x0000fff8>;
+                };
+                cpu@4 {
+			device_type = "cpu";
+			compatible = "arm,armv8";
+			reg = <0x0 0x0200>;
+			enable-method = "spin-table";
+			cpu-release-addr = <0x1 0x0000fff8>;
+                };
+                cpu@5 {
+			device_type = "cpu";
+			compatible = "arm,armv8";
+			reg = <0x0 0x0201>;
+			enable-method = "spin-table";
+			cpu-release-addr = <0x1 0x0000fff8>;
+		};
+		cpu@6 {
+			device_type = "cpu";
+			compatible = "arm,armv8";
+			reg = <0x0 0x0300>;
+			enable-method = "spin-table";
+			cpu-release-addr = <0x1 0x0000fff8>;
+		};
+		cpu@7 {
+			device_type = "cpu";
+			compatible = "arm,armv8";
+			reg = <0x0 0x0301>;
+			enable-method = "spin-table";
+			cpu-release-addr = <0x1 0x0000fff8>;
+                };
+        };  
+
+	gic: interrupt-controller@2c001000 {
+		compatible = "arm,cortex-a15-gic", "arm,cortex-a9-gic";
+		#interrupt-cells = <3>;
+		interrupt-controller;
+		reg = <0x0 0x78010000 0x0 0x1000>,	/* GIC Dist */
+		      <0x0 0x78020000 0x0 0x1000>,	/* GIC CPU */
+		      <0x0 0x78040000 0x0 0x2000>,	/* GIC VCPU Control */
+		      <0x0 0x78060000 0x0 0x2000>;	/* GIC VCPU */
+		interrupts = <1 9 0xf04>;	/* GIC Maintenence IRQ */
+	};
+
+	timer {
+		compatible = "arm,armv8-timer";
+		interrupts = <1 0 0xff01>,	/* Secure Phys IRQ */
+			     <1 13 0xff01>,	/* Non-secure Phys IRQ */
+			     <1 14 0xff01>,	/* Virt IRQ */
+			     <1 15 0xff01>;	/* Hyp IRQ */
+		clock-frequency = <50000000>;
+	};
+
+	soc {
+		compatible = "simple-bus";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		SERIAL0: uart0@1C020000 {
+			device_type = "serial";
+			compatible = "ns16550";
+			reg = <0 0x1c020000 0x0 0x1000>;
+			reg-shift = <2>;
+			clock-frequency = <10000000>; /* Updated by bootloader */
+			interrupt-parent = <&gic>;
+			interrupts = <0x0 0x4c 0x4>;
+                };  
+	};
+};
+
