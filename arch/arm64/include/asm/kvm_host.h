@@ -43,6 +43,7 @@
 
 struct kvm_vcpu;
 int kvm_target_cpu(void);
+struct kvm_irq_level *kvm_target_timer_irq(struct kvm_vcpu *vcpu);
 int kvm_reset_vcpu(struct kvm_vcpu *vcpu);
 int kvm_arch_dev_ioctl_check_extension(long ext);
 

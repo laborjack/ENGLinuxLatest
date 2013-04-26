@@ -36,6 +36,11 @@ struct kvm_stats_debugfs_item debugfs_entries[] = {
 	{ NULL }
 };
 
+struct kvm_irq_level target_default_timer_irq = {
+	.irq = 27,
+	.level = 1,
+};
+
 int kvm_arch_vcpu_setup(struct kvm_vcpu *vcpu)
 {
 	vcpu->arch.hcr_el2 = HCR_GUEST_FLAGS;
@@ -222,6 +227,18 @@ int __attribute_const__ kvm_target_cpu(void)
 	default:
 		return -EINVAL;
 	}
+}
+
+struct kvm_irq_level *kvm_target_timer_irq(struct kvm_vcpu *vcpu)
+{
+	switch (vcpu->arch.target) {
+	case KVM_ARM_TARGET_AEM_V8:
+	case KVM_ARM_TARGET_FOUNDATION_V8:
+	case KVM_ARM_TARGET_CORTEX_A57:
+		return &target_default_timer_irq;
+	default:
+		return NULL;
+	};
 }
 
 int kvm_vcpu_set_target(struct kvm_vcpu *vcpu,
