@@ -30,7 +30,7 @@
 
 static struct timecounter *timecounter;
 static struct workqueue_struct *wqueue;
-static struct kvm_irq_level timer_irq = {
+static struct kvm_irq_level host_timer_irq = {
 	.level	= 1,
 };
 
@@ -65,10 +65,21 @@ static void kvm_timer_inject_irq(struct kvm_vcpu *vcpu)
 {
 	struct arch_timer_cpu *timer = &vcpu->arch.timer_cpu;
 
+	/*
+	 * The vcpu timer irq number cannont be determined in 
+	 * kvm_timer_vcpu_init() because it is called much before
+	 * kvm_vcpu_set_target(). To handle this, we determin
+	 * vcpu timer irq number when we inject the vcpu timer irq
+	 * first time. 
+	 */
+	if (!timer->irq) {
+		timer->irq = kvm_target_timer_irq(vcpu);
+	}
+
 	timer->cntv_ctl |= ARCH_TIMER_CTRL_IT_MASK;
 	kvm_vgic_inject_irq(vcpu->kvm, vcpu->vcpu_id,
-			    vcpu->arch.timer_cpu.irq->irq,
-			    vcpu->arch.timer_cpu.irq->level);
+			    timer->irq->irq,
+			    timer->irq->level);
 }
 
 static irqreturn_t kvm_arch_timer_handler(int irq, void *dev_id)
@@ -163,12 +174,12 @@ void kvm_timer_vcpu_init(struct kvm_vcpu *vcpu)
 	INIT_WORK(&timer->expired, kvm_timer_inject_irq_work);
 	hrtimer_init(&timer->timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
 	timer->timer.function = kvm_timer_expire;
-	timer->irq = &timer_irq;
+	timer->irq = NULL;
 }
 
 static void kvm_timer_init_interrupt(void *info)
 {
-	enable_percpu_irq(timer_irq.irq, 0);
+	enable_percpu_irq(host_timer_irq.irq, 0);
 }
 
 
@@ -182,7 +193,7 @@ static int kvm_timer_cpu_notify(struct notifier_block *self,
 		break;
 	case CPU_DYING:
 	case CPU_DYING_FROZEN:
-		disable_percpu_irq(timer_irq.irq);
+		disable_percpu_irq(host_timer_irq.irq);
 		break;
 	}
 
@@ -230,7 +241,7 @@ int kvm_timer_hyp_init(void)
 		goto out;
 	}
 
-	timer_irq.irq = ppi;
+	host_timer_irq.irq = ppi;
 
 	err = register_cpu_notifier(&kvm_timer_cpu_nb);
 	if (err) {
