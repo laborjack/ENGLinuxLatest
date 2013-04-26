@@ -28,6 +28,14 @@
 #include <asm/kvm_arm.h>
 #include <asm/kvm_coproc.h>
 
+#ifdef CONFIG_KVM_ARM_TIMER
+/*
+ * We cannont directly include arm/include/asm/kvm_arch_timer.h here so,
+ * forward declaring required functions
+ */
+extern int kvm_timer_vcpu_reset(struct kvm_vcpu *vcpu);
+#endif
+
 /*
  * ARMv8 Reset Values
  */
@@ -95,5 +103,10 @@ int kvm_reset_vcpu(struct kvm_vcpu *vcpu)
 	/* Reset system registers */
 	kvm_reset_sys_regs(vcpu);
 
+#ifdef CONFIG_KVM_ARM_TIMER
+	/* Reset arch_timer context */
+	return kvm_timer_vcpu_reset(vcpu);
+#else
 	return 0;
+#endif
 }
