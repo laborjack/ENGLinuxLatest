@@ -75,6 +75,12 @@
 #define PTE_S2_RDWR		 (_AT(pteval_t, 3) << 6)   /* HAP[2:1] */
 
 /*
+ * 2nd stage MemAttr[3:0].
+ */
+#define PTE_S2_MEMATTR(t)	 (_AT(pteval_t, (t)) << 2)
+#define PTE_S2_MEMATTR_MASK	 (_AT(pteval_t, 15) << 2)
+
+/*
  * EL2/HYP PTE/PMD definitions
  */
 #define PMD_HYP			PMD_SECT_USER
