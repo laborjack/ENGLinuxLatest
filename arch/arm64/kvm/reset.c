@@ -27,6 +27,7 @@
 #include <asm/ptrace.h>
 #include <asm/kvm_arm.h>
 #include <asm/kvm_coproc.h>
+#include <asm/kvm_arch_timer.h>
 
 /*
  * ARMv8 Reset Values
@@ -38,6 +39,11 @@ static struct kvm_regs default_regs_reset = {
 static struct kvm_regs default_regs_reset32 = {
 	.regs.pstate = (COMPAT_PSR_MODE_SVC | COMPAT_PSR_A_BIT |
 			COMPAT_PSR_I_BIT | COMPAT_PSR_F_BIT),
+};
+
+static const struct kvm_irq_level default_vtimer_irq = {
+	.irq = 27,
+	.level = 1,
 };
 
 static bool cpu_has_32bit_el1(void)
@@ -75,6 +81,7 @@ int kvm_arch_dev_ioctl_check_extension(long ext)
 int kvm_reset_vcpu(struct kvm_vcpu *vcpu)
 {
 	struct kvm_regs *cpu_reset;
+	const struct kvm_irq_level *cpu_vtimer_irq;
 
 	switch (vcpu->arch.target) {
 	default:
@@ -86,6 +93,7 @@ int kvm_reset_vcpu(struct kvm_vcpu *vcpu)
 		} else {
 			cpu_reset = &default_regs_reset;
 		}
+		cpu_vtimer_irq = &default_vtimer_irq;
 		break;
 	}
 
@@ -94,6 +102,9 @@ int kvm_reset_vcpu(struct kvm_vcpu *vcpu)
 
 	/* Reset system registers */
 	kvm_reset_sys_regs(vcpu);
+
+	/* Reset arch_timer context */
+	kvm_timer_vcpu_reset(vcpu, cpu_vtimer_irq);
 
 	return 0;
 }
