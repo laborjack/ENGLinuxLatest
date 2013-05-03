@@ -12,9 +12,6 @@
 /memreserve/ 0x80000000 0x00010000;
 
 / {
-};
-
-/ {
 	model = "RTSM_VE_AEMv8A";
 	compatible = "arm,rtsm_ve,aemv8a", "arm,vexpress";
 	interrupt-parent = <&gic>;
