@@ -46,6 +46,12 @@ EXPORT_SYMBOL(empty_zero_page);
 pgprot_t pgprot_default;
 EXPORT_SYMBOL(pgprot_default);
 
+pgprot_t pgprot_s2;
+EXPORT_SYMBOL(pgprot_s2);
+
+pgprot_t pgprot_s2_device;
+EXPORT_SYMBOL(pgprot_s2_device);
+
 static pmdval_t prot_sect_kernel;
 
 struct cachepolicy {
@@ -147,6 +153,9 @@ static void __init init_mem_pgprot(void)
 	}
 
 	pgprot_default = __pgprot(PTE_TYPE_PAGE | PTE_AF | default_pgprot);
+
+	pgprot_s2 = __pgprot(PTE_TYPE_PAGE | PTE_AF | PTE_SHARED | PTE_S2_MT_WRITEBACK);
+	pgprot_s2_device = __pgprot(PTE_TYPE_PAGE | PTE_AF | PTE_S2_MT_DEVICE);
 }
 
 pgprot_t phys_mem_access_prot(struct file *file, unsigned long pfn,
