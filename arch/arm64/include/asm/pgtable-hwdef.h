@@ -73,6 +73,10 @@
  */
 #define PTE_S2_RDONLY		 (_AT(pteval_t, 1) << 6)   /* HAP[1]   */
 #define PTE_S2_RDWR		 (_AT(pteval_t, 3) << 6)   /* HAP[2:1] */
+#define PTE_S2_MT_DEVICE	 (_AT(pteval_t, 0x0) << 2) /* MemAttr[3:0] */
+#define PTE_S2_MT_UNCACHED	 (_AT(pteval_t, 0x5) << 2) /* MemAttr[3:0] */
+#define PTE_S2_MT_WRITETHROUGH	 (_AT(pteval_t, 0xa) << 2) /* MemAttr[3:0] */
+#define PTE_S2_MT_WRITEBACK	 (_AT(pteval_t, 0xf) << 2) /* MemAttr[3:0] */
 
 /*
  * EL2/HYP PTE/PMD definitions

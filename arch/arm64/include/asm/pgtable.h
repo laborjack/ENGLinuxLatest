@@ -60,6 +60,7 @@ extern void __pgd_error(const char *file, int line, unsigned long val);
 #define _PAGE_DEFAULT		PTE_TYPE_PAGE | PTE_AF
 
 extern pgprot_t pgprot_default;
+extern pgprot_t pgprot_s2;
 
 #define __pgprot_modify(prot,mask,bits) \
 	__pgprot((pgprot_val(prot) & ~(mask)) | (bits))
@@ -79,8 +80,8 @@ extern pgprot_t pgprot_default;
 #define PAGE_HYP		_MOD_PROT(pgprot_default, PTE_HYP)
 #define PAGE_HYP_DEVICE		__pgprot(PROT_DEVICE_nGnRE | PTE_HYP)
 
-#define PAGE_S2			_MOD_PROT(pgprot_default, PTE_S2_RDONLY)
-#define PAGE_S2_DEVICE		__pgprot((PROT_DEVICE_nGnRE | PTE_S2_RDWR) & ~PTE_PXN)
+#define PAGE_S2			_MOD_PROT(pgprot_s2, PTE_S2_RDONLY)
+#define PAGE_S2_DEVICE		_MOD_PROT(pgprot_s2, PTE_S2_RDWR)
 
 #define __PAGE_NONE		__pgprot(((_PAGE_DEFAULT) & ~PTE_TYPE_MASK) | PTE_PROT_NONE)
 #define __PAGE_SHARED		__pgprot(_PAGE_DEFAULT | PTE_USER | PTE_NG | PTE_PXN | PTE_UXN)
