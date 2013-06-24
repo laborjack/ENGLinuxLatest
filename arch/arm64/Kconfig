@@ -142,6 +142,8 @@ source "drivers/pci/Kconfig"
 
 source "drivers/pcmcia/Kconfig"
 
+source "drivers/pci/apm/Kconfig"
+
 endmenu
 
 menu "Kernel Features"
