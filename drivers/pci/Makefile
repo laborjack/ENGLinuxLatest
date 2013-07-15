@@ -13,6 +13,8 @@ obj-$(CONFIG_PCI_QUIRKS) += quirks.o
 # Build PCI Express stuff if needed
 obj-$(CONFIG_PCIEPORTBUS) += pcie/
 
+obj-$(CONFIG_APM88XXXX_PCI) += apm/
+
 obj-$(CONFIG_PCI_IOAPIC) += ioapic.o
 
 # Build the PCI Hotplug drivers if we were asked to
