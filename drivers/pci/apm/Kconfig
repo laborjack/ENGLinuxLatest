@@ -1,0 +1,10 @@
+config	APM88XXXX_PCI
+	bool "APM88XXX PCIe platform driver"
+	depends on PCI
+	default y
+	help
+	  Enable APM88XXXX PCIe platform driver for
+	  2x, 4x, 8x / GEN1, GEN2, GEN3 PCIe Root Complex
+	  and Endpoints.
+
+
