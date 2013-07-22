@@ -120,6 +120,16 @@ static inline u64 __raw_readq(const volatile void __iomem *addr)
 #define IO_SPACE_LIMIT		0xffff
 #define PCI_IOBASE		((void __iomem *)(MODULES_VADDR - SZ_2M))
 
+/*
+ * A typesafe __io() helper
+ */
+static inline void __iomem *__typesafe_io(unsigned long addr)
+{
+	return (void __iomem *)addr;
+}
+
+#define __io(a)         __typesafe_io((a) & IO_SPACE_LIMIT)
+
 static inline u8 inb(unsigned long addr)
 {
 	return readb(addr + PCI_IOBASE);
@@ -224,6 +234,9 @@ extern void __memset_io(volatile void __iomem *, int, size_t);
  */
 extern void __iomem *__ioremap(phys_addr_t phys_addr, size_t size, pgprot_t prot);
 extern void __iounmap(volatile void __iomem *addr);
+
+extern void __iomem *ioport_map(unsigned long port, unsigned int nr);
+extern void ioport_unmap(void __iomem *addr);
 
 #define PROT_DEFAULT		(PTE_TYPE_PAGE | PTE_AF | PTE_DIRTY)
 #define PROT_DEVICE_nGnRE	(PROT_DEFAULT | PTE_PXN | PTE_UXN | PTE_ATTRINDX(MT_DEVICE_nGnRE))
