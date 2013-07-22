@@ -28,9 +28,6 @@ config KVM
 	---help---
 	  Support hosting virtualized guest machines.
 
-	  This module provides access to the hardware capabilities through
-	  a character device node named /dev/kvm.
-
 	  If unsure, say N.
 
 config KVM_ARM_HOST
@@ -39,16 +36,16 @@ config KVM_ARM_HOST
 	  Provides host support for ARM processors.
 
 config KVM_ARM_VGIC
-        bool
+	bool
 	depends on KVM_ARM_HOST && OF
 	select HAVE_KVM_IRQCHIP
 	---help---
 	  Adds support for a hardware assisted, in-kernel GIC emulation.
 
 config KVM_ARM_TIMER
-        bool
+	bool
 	depends on KVM_ARM_VGIC
 	---help---
-	  Adds support for the Architected Timers in virtual machines
+	  Adds support for the Architected Timers in virtual machines.
 
 endif # VIRTUALIZATION
