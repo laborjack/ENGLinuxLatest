@@ -123,6 +123,8 @@ static inline void coherent_icache_guest_page(struct kvm *kvm, gfn_t gfn)
 	if (!icache_is_aliasing()) {		/* PIPT */
 		unsigned long hva = gfn_to_hva(kvm, gfn);
 		flush_icache_range(hva, hva + PAGE_SIZE);
+		/* Flush d-cache for systems with external caches. */
+		__flush_dcache_area((void *) hva, PAGE_SIZE);
 	} else if (!icache_is_aivivt()) {	/* non ASID-tagged VIVT */
 		/* any kind of VIPT cache */
 		__flush_icache_all();
