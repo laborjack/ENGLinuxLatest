@@ -2283,7 +2283,7 @@ current state.  "addr" is ignored.
 Capability: basic
 Architectures: arm, arm64
 Type: vcpu ioctl
-Parameters: struct struct kvm_vcpu_init (in)
+Parameters: struct kvm_vcpu_init (in/out)
 Returns: 0 on success; -1 on error
 Errors:
   EINVAL:    the target is unknown, or the combination of features is invalid.
@@ -2302,6 +2302,9 @@ Possible features:
 	  Depends on KVM_CAP_ARM_PSCI.
 	- KVM_ARM_VCPU_EL1_32BIT: Starts the CPU in a 32bit mode.
 	  Depends on KVM_CAP_ARM_EL1_32BIT (arm64 only).
+
+This ioctl returns updated struct kvm_vcpu_init showing VCPU target 
+type and VCPU features that will be available.
 
 
 4.83 KVM_GET_REG_LIST
