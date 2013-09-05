@@ -230,12 +230,18 @@ int __attribute_const__ kvm_target_cpu(void)
 }
 
 int kvm_vcpu_set_target(struct kvm_vcpu *vcpu,
-			const struct kvm_vcpu_init *init)
+			struct kvm_vcpu_init *init)
 {
 	unsigned int i;
 	int phys_target = kvm_target_cpu();
 
-	if (init->target != phys_target)
+	if (phys_target < 0) {
+		return phys_target;
+	}
+
+	if (init->target == KVM_ARM_TARGET_HOST)
+		init->target = phys_target;
+	else if (init->target != phys_target)
 		return -EINVAL;
 
 	vcpu->arch.target = phys_target;

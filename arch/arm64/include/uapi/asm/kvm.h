@@ -56,7 +56,7 @@ struct kvm_regs {
 #define KVM_ARM_TARGET_FOUNDATION_V8	1
 #define KVM_ARM_TARGET_CORTEX_A57	2
 #define KVM_ARM_TARGET_XGENE_POTENZA	3
-
+#define KVM_ARM_TARGET_HOST		0x0FFFFFFF
 #define KVM_ARM_NUM_TARGETS		4
 
 /* KVM_ARM_SET_DEVICE_ADDR ioctl id encoding */
