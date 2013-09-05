@@ -63,6 +63,7 @@ struct kvm_regs {
 
 /* Supported Processor Types */
 #define KVM_ARM_TARGET_CORTEX_A15	0
+#define KVM_ARM_TARGET_HOST		0x0FFFFFFF
 #define KVM_ARM_NUM_TARGETS		1
 
 /* KVM_ARM_SET_DEVICE_ADDR ioctl id encoding */
