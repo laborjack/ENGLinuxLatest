@@ -715,6 +715,8 @@ long kvm_arch_vcpu_ioctl(struct file *filp,
 		return kvm_vcpu_set_target(vcpu, &init);
 
 	}
+	case KVM_ARM_SUITABLE_TARGET:
+		return kvm_target_cpu();
 	case KVM_SET_ONE_REG:
 	case KVM_GET_ONE_REG: {
 		struct kvm_one_reg reg;
