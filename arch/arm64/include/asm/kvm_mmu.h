@@ -118,11 +118,19 @@ static inline void kvm_set_s2pte_writable(pte_t *pte)
 
 struct kvm;
 
-static inline void coherent_icache_guest_page(struct kvm *kvm, gfn_t gfn)
+static inline void coherent_icache_guest_page(struct kvm_vcpu *vcpu, gfn_t gfn)
 {
 	if (!icache_is_aliasing()) {		/* PIPT */
-		unsigned long hva = gfn_to_hva(kvm, gfn);
+		unsigned long hva = gfn_to_hva(vcpu->kvm, gfn);
+		u8 attr;
 		flush_icache_range(hva, hva + PAGE_SIZE);
+		attr = vcpu->arch.fault.par_el2 >> 56;
+		/* Check for device access OR
+		 * non-device, non-cacheable access
+		 */
+		if (!(attr & 0xf0) ||
+		    ((attr & 0xf0) && (attr & 0x0f) == 4))
+			__flush_dcache_area((void *)hva, PAGE_SIZE);
 	} else if (!icache_is_aivivt()) {	/* non ASID-tagged VIVT */
 		/* any kind of VIPT cache */
 		__flush_icache_all();
