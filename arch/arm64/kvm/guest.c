@@ -254,6 +254,27 @@ int kvm_vcpu_set_target(struct kvm_vcpu *vcpu,
 	return kvm_reset_vcpu(vcpu);
 }
 
+int kvm_vcpu_preferred_target(struct kvm_vcpu_init *init)
+{
+	int target = kvm_target_cpu();
+
+	if (target < 0)
+		return -ENODEV;
+
+	memset(init, 0, sizeof(*init));
+
+	/* 
+	 * For now, we return all optional features are available
+	 * for preferred target. In future, we might have features
+	 * available based on underlying host.
+	 */
+	init->target = (__u32)target;
+	init->features[0] |= (1 << KVM_ARM_VCPU_POWER_OFF);
+	init->features[0] |= (1 << KVM_ARM_VCPU_EL1_32BIT);
+
+	return 0;
+}
+
 int kvm_arch_vcpu_ioctl_get_fpu(struct kvm_vcpu *vcpu, struct kvm_fpu *fpu)
 {
 	return -EINVAL;
