@@ -749,24 +749,16 @@ el1_trap:
 	ccmp	x2, x0, #4, ne
 	b.ne	1f		// Not an abort we care about
 
-	/* This is an abort. Check for permission fault */
-	and	x2, x1, #ESR_EL2_FSC_TYPE
-	cmp	x2, #FSC_PERM
-	b.ne	1f		// Not a permission fault
-
-	/*
-	 * Check for Stage-1 page table walk, which is guaranteed
-	 * to give a valid HPFAR_EL2.
-	 */
-	tbnz	x1, #7, 1f	// S1PTW is set
-
 	/* Preserve PAR_EL1 */
 	mrs	x3, par_el1
 	push	x3, xzr
 
 	/*
-	 * Permission fault, HPFAR_EL2 is invalid.
-	 * Resolve the IPA the hard way using the guest VA.
+	 * Two cases:
+	 * - S2 translation fault, we need the memory attributes.
+	 * - S2 permission fault, HPFAR_EL2 is invalid.
+	 *
+	 * In both cases, resolve the IPA the hard way using the guest VA.
 	 * Stage-1 translation already validated the memory access rights.
 	 * As such, we can use the EL1 translation regime, and don't have
 	 * to distinguish between EL0 and EL1 access.
@@ -780,15 +772,19 @@ el1_trap:
 	pop	x0, xzr			// Restore PAR_EL1 from the stack
 	msr	par_el1, x0
 	tbnz	x3, #0, 3f		// Bail out if we failed the translation
+
+	mrs     x0, tpidr_el2
+	str     x3, [x0, #VCPU_PAR_EL2]
 	ubfx	x3, x3, #12, #36	// Extract IPA
 	lsl	x3, x3, #4		// and present it like HPFAR
+
 	b	2f
 
-1:	mrs	x3, hpfar_el2
+1:	mrs	x0, tpidr_el2
 	mrs	x2, far_el2
+	mrs	x3, hpfar_el2
 
-2:	mrs	x0, tpidr_el2
-	str	x1, [x0, #VCPU_ESR_EL2]
+2:	str	x1, [x0, #VCPU_ESR_EL2]
 	str	x2, [x0, #VCPU_FAR_EL2]
 	str	x3, [x0, #VCPU_HPFAR_EL2]
 
