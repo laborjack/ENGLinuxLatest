@@ -176,6 +176,36 @@
 				reg-names = "csr-reg";
 				clock-output-names = "eth8clk";
 			};
+			                    
+			eth01clk: eth01clk {
+				compatible = "apm,xgene-device-clock";
+				#clock-cells = <1>;
+				clocks = <&socplldiv2 0>;
+				clock-names = "eth01clk";
+				reg = <0x0 0x1F21C000 0x0 0x1000
+				       0x0 0x00000000 0x0 0x0000>;
+				clock-output-names = "eth01clk";
+			};
+
+			eth23clk: eth23clk {
+				compatible = "apm,xgene-device-clock";
+				#clock-cells = <1>;
+				clocks = <&socplldiv2 0>;
+				clock-names = "eth23clk";
+				reg = <0x0 0x1F22C000 0x0 0x1000
+				       0x0 0x00000000 0x0 0x0000>;
+				clock-output-names = "eth23clk";
+                        };
+
+			sata45clk: sata45clk {
+				compatible = "apm,xgene-device-clock";
+				#clock-cells = <1>;
+				clocks = <&socplldiv2 0>;
+				clock-names = "sata45clk";
+				reg = <0x0 0x1F23C000 0x0 0x1000
+				       0x0 0x00000000 0x0 0x0000>;
+				clock-output-names = "sata45clk";
+                        };
 		};
 
                 reboot@0x17000014 {
@@ -221,6 +251,49 @@
                                 0x0 0x0 0x0 0x2 &gic 0x0 0xc3 0x1
                                 0x0 0x0 0x0 0x3 &gic 0x0 0xc4 0x1
                                 0x0 0x0 0x0 0x4 &gic 0x0 0xc5 0x1>;
+                };
+
+                SATA0: sata@1A000000 {
+                        compatible = "apm,ceva-ahci";
+                        reg =  <0x0 0x1A000000 0x0 0x100000
+                                0x0 0x1F210000 0x0 0x10000>;
+                        interrupt-parent = <&gic>;
+                        interrupts = <0x0 0x86 0x4>;
+                        #clock-cells = <1>;
+                        clocks = <&eth01clk 0>;
+                        clock-names = "eth01clk";
+                        status="na";
+                        serdes-diff-clk = <0>;
+                        gen-sel = <3>;
+                };
+
+                SATA1: sata@1A400000 {
+                        compatible = "apm,ceva-ahci";
+                        reg =  <0x0 0x1A400000 0x0 0x100000
+                                0x0 0x1F220000 0x0 0x10000>;
+                        interrupt-parent = <&gic>;
+                        interrupts = <0x0 0x87 0x4>;
+                        #clock-cells = <1>;
+                        clocks = <&eth23clk 0>;
+                        clock-names = "eth23clk";
+                        status="na";
+                        serdes-diff-clk = <0>;
+                        gen-sel = <3>;
+                };
+
+                SATA2: sata@1A800000 {
+                        compatible = "apm,ceva-ahci";
+                        reg =  <0x0 0x1A800000 0x0 0x100000
+                                0x0 0x1F230000 0x0 0x10000
+				0x00 0x1f2d0000 0x0 0x00010000>;
+                        interrupt-parent = <&gic>;
+                        interrupts = <0x0 0x88 0x4>;
+                        #clock-cells = <1>;
+                        clocks = <&sata45clk 0>;
+                        clock-names = "sata45clk";
+                        status="ok";
+                        serdes-diff-clk = <0>;
+                        gen-sel = <3>;
                 };
 	};
 };
