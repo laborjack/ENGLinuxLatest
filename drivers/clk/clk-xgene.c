@@ -466,6 +466,9 @@ static void __init xgene_devclk_init(struct device_node *np)
 			}
 			break;
 		}
+		if (!resource_size(&res)) {
+			continue;
+		}
 		map_res = of_iomap(np, i);
 		if (map_res == NULL) {
 			pr_err("Unable to map resource %d for %s\n",
