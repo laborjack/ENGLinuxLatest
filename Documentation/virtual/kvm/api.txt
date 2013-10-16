@@ -2655,6 +2655,19 @@ It gets triggered whenever both KVM_CAP_PPC_EPR are enabled and an
 external interrupt has just been delivered into the guest. User space
 should put the acknowledged interrupt vector into the 'epr' field.
 
+		/* KVM_EXIT_PSCI */
+		struct {
+			__u32 fn;
+			__u64 args[7];
+			__u64 ret[4];
+		} psci;
+
+ARM/ARM64 specific. The KVM ARM/ARM64 emulates Power State and Coordination
+Interface (PSCI) for the Guest. This exit occurs when Guest issues a PSCI
+function call to KVM ARM/ARM64 which is not emulated by in-kernel PSCI
+emulation and needs to be emulated in user space (i.e. QEMU or KVMTOOL).
+Examples of such PSCI functions are SYSTEM_OFF and SYSTEM_RESET.
+
 		/* Fix the size of the union. */
 		char padding[256];
 	};
