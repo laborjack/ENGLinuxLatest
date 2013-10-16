@@ -18,6 +18,29 @@
 #ifndef __ARM_KVM_PSCI_H__
 #define __ARM_KVM_PSCI_H__
 
-bool kvm_psci_call(struct kvm_vcpu *vcpu);
+#include <linux/kvm_host.h>
+#include <asm/kvm_asm.h>
+#include <asm/kvm_arm.h>
+
+/*
+ * The in-kernel PSCI emulation code wants to use a copy of run->psci,
+ * which is an anonymous type. Use our own type instead.
+ */
+struct kvm_exit_psci {
+	u32		fn;
+	u64		args[7];
+};
+
+static inline void kvm_prepare_psci(struct kvm_run *run,
+				    struct kvm_exit_psci *psci)
+{
+	run->psci.fn = psci->fn;
+	memcpy(&run->psci.args, &psci->args, sizeof(run->psci.args));
+	memset(&run->psci.ret, 0, sizeof(run->psci.ret));
+	run->exit_reason = KVM_EXIT_PSCI;
+}
+
+int kvm_handle_psci_return(struct kvm_vcpu *vcpu, struct kvm_run *run);
+int kvm_psci_call(struct kvm_vcpu *vcpu, struct kvm_run *run);
 
 #endif /* __ARM_KVM_PSCI_H__ */

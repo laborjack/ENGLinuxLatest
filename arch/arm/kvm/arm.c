@@ -459,7 +459,7 @@ static void update_vttbr(struct kvm *kvm)
 	spin_unlock(&kvm_vmid_lock);
 }
 
-static int kvm_vcpu_first_run_init(struct kvm_vcpu *vcpu)
+static int kvm_vcpu_first_run_init(struct kvm_vcpu *vcpu, struct kvm_run *run)
 {
 	if (likely(vcpu->arch.has_run_once))
 		return 0;
@@ -483,7 +483,7 @@ static int kvm_vcpu_first_run_init(struct kvm_vcpu *vcpu)
 	 */
 	if (test_and_clear_bit(KVM_ARM_VCPU_POWER_OFF, vcpu->arch.features)) {
 		*vcpu_reg(vcpu, 0) = KVM_PSCI_FN_CPU_OFF;
-		kvm_psci_call(vcpu);
+		kvm_psci_call(vcpu, run);
 	}
 
 	return 0;
@@ -520,12 +520,18 @@ int kvm_arch_vcpu_ioctl_run(struct kvm_vcpu *vcpu, struct kvm_run *run)
 	if (unlikely(!kvm_vcpu_initialized(vcpu)))
 		return -ENOEXEC;
 
-	ret = kvm_vcpu_first_run_init(vcpu);
+	ret = kvm_vcpu_first_run_init(vcpu, vcpu->run);
 	if (ret)
 		return ret;
 
 	if (run->exit_reason == KVM_EXIT_MMIO) {
 		ret = kvm_handle_mmio_return(vcpu, vcpu->run);
+		if (ret)
+			return ret;
+	}
+
+	if (run->exit_reason == KVM_EXIT_PSCI) {
+		ret = kvm_handle_psci_return(vcpu, vcpu->run);
 		if (ret)
 			return ret;
 	}

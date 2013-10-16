@@ -71,6 +71,45 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
 	return KVM_PSCI_RET_SUCCESS;
 }
 
+static void kvm_psci_system_off(struct kvm_vcpu *vcpu, struct kvm_run *run)
+{
+	struct kvm_exit_psci psci;
+
+	psci.fn = KVM_PSCI_FN_SYSTEM_OFF;
+	memset(&psci.args, 0, sizeof(psci.args));
+	kvm_prepare_psci(run, &psci);
+}
+
+static void kvm_psci_system_reset(struct kvm_vcpu *vcpu, struct kvm_run *run)
+{
+	struct kvm_exit_psci psci;
+
+	psci.fn = KVM_PSCI_FN_SYSTEM_RESET;
+	memset(&psci.args, 0, sizeof(psci.args));
+	kvm_prepare_psci(run, &psci);
+}
+
+/**
+ * kvm_handle_psci_return -- Handle PSCI after user space emulation
+ * @vcpu: The VCPU pointer
+ * @run:  The VCPU run struct containing the psci data
+ *
+ * This should only be called after returning from userspace for
+ * PSCI emulation.
+ */
+int kvm_handle_psci_return(struct kvm_vcpu *vcpu, struct kvm_run *run)
+{
+	/*
+	 * Currently, the PSCI functions passed to user space for emulation
+	 * are SYSTEM_OFF and SYSTEM_RESET. These PSCI functions are not
+	 * expected to return back after emulating in user space hence by
+	 * default we return -EINVAL to avoid user space from doing RUN ioctl
+	 * after handling KVM_EXIT_PSCI.
+	 */
+
+	return -EINVAL;
+}
+
 /**
  * kvm_psci_call - handle PSCI call if r0 value is in range
  * @vcpu: Pointer to the VCPU struct
@@ -81,8 +120,9 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
  * function number specified in r0 is withing the PSCI range, and false
  * otherwise.
  */
-bool kvm_psci_call(struct kvm_vcpu *vcpu)
+int kvm_psci_call(struct kvm_vcpu *vcpu, struct kvm_run *run)
 {
+	int ret = 0;
 	unsigned long psci_fn = *vcpu_reg(vcpu, 0) & ~((u32) 0);
 	unsigned long val;
 
@@ -98,11 +138,20 @@ bool kvm_psci_call(struct kvm_vcpu *vcpu)
 	case KVM_PSCI_FN_MIGRATE:
 		val = KVM_PSCI_RET_NI;
 		break;
-
+	case KVM_PSCI_FN_SYSTEM_OFF:
+		kvm_psci_system_off(vcpu, run);
+		val = KVM_PSCI_RET_SUCCESS;
+		ret = -EINTR;
+		break;
+	case KVM_PSCI_FN_SYSTEM_RESET:
+		kvm_psci_system_reset(vcpu, run);
+		val = KVM_PSCI_RET_SUCCESS;
+		ret = -EINTR;
+		break;
 	default:
-		return false;
+		return -EINVAL;
 	}
 
 	*vcpu_reg(vcpu, 0) = val;
-	return true;
+	return ret;
 }
