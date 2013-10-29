@@ -6,4 +6,8 @@
 extern void (*handle_arch_irq)(struct pt_regs *);
 extern void set_handle_irq(void (*handle_irq)(struct pt_regs *));
 
+#ifndef NO_IRQ
+#define NO_IRQ	0
+#endif
+
 #endif
