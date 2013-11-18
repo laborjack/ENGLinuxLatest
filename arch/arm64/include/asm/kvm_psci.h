@@ -18,6 +18,6 @@
 #ifndef __ARM64_KVM_PSCI_H__
 #define __ARM64_KVM_PSCI_H__
 
-bool kvm_psci_call(struct kvm_vcpu *vcpu);
+int kvm_psci_call(struct kvm_vcpu *vcpu, struct kvm_run *run);
 
 #endif /* __ARM64_KVM_PSCI_H__ */
