@@ -27,6 +27,7 @@
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/of_irq.h>
+#include <linux/of_pci.h>
 #include <linux/bootmem.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
@@ -49,7 +50,6 @@
 #define GPIO_INDEX(index)       (MAX_GPIOS - MAX_BOARD_GPIOS + index)
 
 static struct apm_pcie_info pcie_ports;
-extern int of_irq_map_pci(struct pci_dev *pdev, struct of_irq *out_irq);
 
 /* Mustang board requires reset to EP card through GPIO pin 25 */
 void apm_pcie_gpio_reset(void)
@@ -886,7 +886,7 @@ static int apm_pcie_setup(int nr, struct pci_sys_data *sys)
 
 static int apm_pcie_map_irq(const struct pci_dev *pci_dev, u8 slot, u8 pin)
 {
-	struct of_irq oirq;
+	struct of_phandle_args oirq;
 	unsigned int virq = 0;
 
 //	if (pci_is_root_bus(pci_dev->bus))
@@ -895,7 +895,7 @@ static int apm_pcie_map_irq(const struct pci_dev *pci_dev, u8 slot, u8 pin)
 	PCIE_VDEBUG("PCI: Try to map irq for dev: %p name: %s...\n",
 		    pci_dev, pci_name(pci_dev));
 
-	if (of_irq_map_pci((struct pci_dev *) pci_dev, &oirq)) {
+	if (of_irq_parse_pci((struct pci_dev *) pci_dev, &oirq)) {
 		PCIE_DEBUG("No map ! Using slot %d (pin %d)\n", slot, pin);
 		return -1;
 	} else {
@@ -904,8 +904,7 @@ static int apm_pcie_map_irq(const struct pci_dev *pci_dev, u8 slot, u8 pin)
 				oirq.controller ? oirq.controller->full_name :
 				"<default>");
 
-		virq = irq_create_of_mapping(oirq.controller, oirq.specifier,
-				      oirq.size);
+		virq = irq_create_of_mapping(&oirq);
 		if (virq == 0) {
 			PCIE_ERR("Failed to map PCI legacy interrupt\n");
 			return -1;
