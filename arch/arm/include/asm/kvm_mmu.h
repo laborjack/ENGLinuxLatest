@@ -116,7 +116,7 @@ static inline void kvm_set_s2pmd_writable(pmd_t *pmd)
 
 struct kvm;
 
-static inline void coherent_icache_guest_page(struct kvm *kvm, hva_t hva,
+static inline void coherent_icache_guest_page(struct kvm_vcpu *vcpu, hva_t hva,
 					      unsigned long size)
 {
 	/*
