@@ -30,8 +30,13 @@ typedef int (*exit_handle_fn)(struct kvm_vcpu *, struct kvm_run *);
 
 static int handle_hvc(struct kvm_vcpu *vcpu, struct kvm_run *run)
 {
-	if (kvm_psci_call(vcpu))
+	int ret;
+
+	ret = kvm_psci_call(vcpu);
+	if (ret == 0)
 		return 1;
+	else if (ret > 0)
+		return 0;
 
 	kvm_inject_undefined(vcpu);
 	return 1;
@@ -39,9 +44,6 @@ static int handle_hvc(struct kvm_vcpu *vcpu, struct kvm_run *run)
 
 static int handle_smc(struct kvm_vcpu *vcpu, struct kvm_run *run)
 {
-	if (kvm_psci_call(vcpu))
-		return 1;
-
 	kvm_inject_undefined(vcpu);
 	return 1;
 }
