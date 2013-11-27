@@ -84,18 +84,31 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
 	return KVM_PSCI_RET_SUCCESS;
 }
 
+static void kvm_psci_system_off(struct kvm_vcpu *vcpu)
+{
+	vcpu->run->exit_reason = KVM_EXIT_SHUTDOWN;
+}
+
+static void kvm_psci_system_reset(struct kvm_vcpu *vcpu)
+{
+	vcpu->run->exit_reason = KVM_EXIT_RESET;
+}
+
 /**
  * kvm_psci_call - handle PSCI call if r0 value is in range
  * @vcpu: Pointer to the VCPU struct
  *
  * Handle PSCI calls from guests through traps from HVC instructions.
- * The calling convention is similar to SMC calls to the secure world where
- * the function number is placed in r0 and this function returns true if the
- * function number specified in r0 is withing the PSCI range, and false
- * otherwise.
+ * The calling convention is similar to SMC calls to the secure world
+ * where the function number is placed in r0 and function number
+ * specified in r0 is withing the PSCI range.
+ *
+ * This function returns: 0 (success), > 0 (success but exit to user
+ * space), and < 0 (failure)
  */
-bool kvm_psci_call(struct kvm_vcpu *vcpu)
+int kvm_psci_call(struct kvm_vcpu *vcpu)
 {
+	int ret = 0;
 	unsigned long psci_fn = *vcpu_reg(vcpu, 0) & ~((u32) 0);
 	unsigned long val;
 
@@ -111,11 +124,20 @@ bool kvm_psci_call(struct kvm_vcpu *vcpu)
 	case KVM_PSCI_FN_MIGRATE:
 		val = KVM_PSCI_RET_NI;
 		break;
-
+	case KVM_PSCI_FN_SYSTEM_OFF:
+		kvm_psci_system_off(vcpu);
+		val = KVM_PSCI_RET_SUCCESS;
+		ret = 1;
+		break;
+	case KVM_PSCI_FN_SYSTEM_RESET:
+		kvm_psci_system_reset(vcpu);
+		val = KVM_PSCI_RET_SUCCESS;
+		ret = 1;
+		break;
 	default:
-		return false;
+		return -EINVAL;
 	}
 
 	*vcpu_reg(vcpu, 0) = val;
-	return true;
+	return ret;
 }
