@@ -129,6 +129,12 @@ config SATA_ACARD_AHCI
 
 	  If unsure, say N.
 
+config SATA_XGENE_AHCI
+        tristate "X-Gene SATA AHCI support"
+	depends on SATA_AHCI_PLATFORM
+        help
+          This option enables support for X-Gene SATA AHCI controller.
+
 config SATA_SIL24
 	tristate "Silicon Image 3124/3132 SATA support"
 	depends on PCI
