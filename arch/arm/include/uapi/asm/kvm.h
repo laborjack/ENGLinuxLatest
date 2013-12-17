@@ -172,6 +172,8 @@ struct kvm_arch_memory_slot {
 #define KVM_PSCI_FN_CPU_OFF		KVM_PSCI_FN(1)
 #define KVM_PSCI_FN_CPU_ON		KVM_PSCI_FN(2)
 #define KVM_PSCI_FN_MIGRATE		KVM_PSCI_FN(3)
+#define KVM_PSCI_FN_SYSTEM_OFF		KVM_PSCI_FN(4)
+#define KVM_PSCI_FN_SYSTEM_RESET	KVM_PSCI_FN(5)
 
 #define KVM_PSCI_RET_SUCCESS		0
 #define KVM_PSCI_RET_NI			((unsigned long)-1)
