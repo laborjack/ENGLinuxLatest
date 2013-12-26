@@ -369,6 +369,12 @@ irqreturn_t ahci_hw_interrupt(int irq, void *dev_instance);
 irqreturn_t ahci_thread_fn(int irq, void *dev_instance);
 void ahci_print_info(struct ata_host *host, const char *scc_s);
 int ahci_host_activate(struct ata_host *host, int irq, unsigned int n_msis);
+void ahci_sw_activity(struct ata_link *link);
+int ahci_scr_write(struct ata_link *link, unsigned int sc_reg, u32 val);
+void ahci_error_intr(struct ata_port *ap, u32 irq_stat);
+int ahci_exec_polled_cmd(struct ata_port *ap, int pmp,
+			 struct ata_taskfile *tf, int is_cmd, u16 flags,
+			 unsigned long timeout_msec);
 void ahci_error_handler(struct ata_port *ap);
 
 static inline void __iomem *__ahci_port_base(struct ata_host *host,
