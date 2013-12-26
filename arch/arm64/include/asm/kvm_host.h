@@ -79,6 +79,7 @@ struct kvm_mmu_memory_cache {
 struct kvm_vcpu_fault_info {
 	u32 esr_el2;		/* Hyp Syndrom Register */
 	u64 far_el2;		/* Hyp Fault Address Register */
+	u64 par_el2;		/* Result of FAR_EL2 translation */
 	u64 hpfar_el2;		/* Hyp IPA Fault Address Register */
 };
 
