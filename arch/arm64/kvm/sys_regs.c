@@ -121,6 +121,42 @@ done:
 }
 
 /*
+ * Generic accessor for VM registers. Only called as long as HCR_TVM
+ * is set.
+ */
+static bool access_vm_reg(struct kvm_vcpu *vcpu,
+			  const struct sys_reg_params *p,
+			  const struct sys_reg_desc *r)
+{
+	BUG_ON(!p->is_write);
+
+	vcpu_sys_reg(vcpu, r->reg) = *vcpu_reg(vcpu, p->Rt);
+	return true;
+}
+
+/*
+ * SCTLR_EL1 accessor. Only called as long as HCR_TVM is set.  If the
+ * guest enables the MMU, we stop trapping the VM sys_regs and leave
+ * it in complete control of the caches.
+ */
+static bool access_sctlr_el1(struct kvm_vcpu *vcpu,
+			     const struct sys_reg_params *p,
+			     const struct sys_reg_desc *r)
+{
+	unsigned long val;
+
+	BUG_ON(!p->is_write);
+
+	val = *vcpu_reg(vcpu, p->Rt);
+	vcpu_sys_reg(vcpu, r->reg) = val;
+
+	if ((val & (0b101)) == 0b101)	/* MMU+Caches enabled? */
+		vcpu->arch.hcr_el2 &= ~HCR_TVM;
+
+	return true;
+}
+
+/*
  * We could trap ID_DFR0 and tell the guest we don't support performance
  * monitoring.  Unfortunately the patch to make the kernel check ID_DFR0 was
  * NAKed, so it will read the PMCR anyway.
@@ -185,32 +221,32 @@ static const struct sys_reg_desc sys_reg_descs[] = {
 	  NULL, reset_mpidr, MPIDR_EL1 },
 	/* SCTLR_EL1 */
 	{ Op0(0b11), Op1(0b000), CRn(0b0001), CRm(0b0000), Op2(0b000),
-	  NULL, reset_val, SCTLR_EL1, 0x00C50078 },
+	  access_sctlr_el1, reset_val, SCTLR_EL1, 0x00C50078 },
 	/* CPACR_EL1 */
 	{ Op0(0b11), Op1(0b000), CRn(0b0001), CRm(0b0000), Op2(0b010),
 	  NULL, reset_val, CPACR_EL1, 0 },
 	/* TTBR0_EL1 */
 	{ Op0(0b11), Op1(0b000), CRn(0b0010), CRm(0b0000), Op2(0b000),
-	  NULL, reset_unknown, TTBR0_EL1 },
+	  access_vm_reg, reset_unknown, TTBR0_EL1 },
 	/* TTBR1_EL1 */
 	{ Op0(0b11), Op1(0b000), CRn(0b0010), CRm(0b0000), Op2(0b001),
-	  NULL, reset_unknown, TTBR1_EL1 },
+	  access_vm_reg, reset_unknown, TTBR1_EL1 },
 	/* TCR_EL1 */
 	{ Op0(0b11), Op1(0b000), CRn(0b0010), CRm(0b0000), Op2(0b010),
-	  NULL, reset_val, TCR_EL1, 0 },
+	  access_vm_reg, reset_val, TCR_EL1, 0 },
 
 	/* AFSR0_EL1 */
 	{ Op0(0b11), Op1(0b000), CRn(0b0101), CRm(0b0001), Op2(0b000),
-	  NULL, reset_unknown, AFSR0_EL1 },
+	  access_vm_reg, reset_unknown, AFSR0_EL1 },
 	/* AFSR1_EL1 */
 	{ Op0(0b11), Op1(0b000), CRn(0b0101), CRm(0b0001), Op2(0b001),
-	  NULL, reset_unknown, AFSR1_EL1 },
+	  access_vm_reg, reset_unknown, AFSR1_EL1 },
 	/* ESR_EL1 */
 	{ Op0(0b11), Op1(0b000), CRn(0b0101), CRm(0b0010), Op2(0b000),
-	  NULL, reset_unknown, ESR_EL1 },
+	  access_vm_reg, reset_unknown, ESR_EL1 },
 	/* FAR_EL1 */
 	{ Op0(0b11), Op1(0b000), CRn(0b0110), CRm(0b0000), Op2(0b000),
-	  NULL, reset_unknown, FAR_EL1 },
+	  access_vm_reg, reset_unknown, FAR_EL1 },
 	/* PAR_EL1 */
 	{ Op0(0b11), Op1(0b000), CRn(0b0111), CRm(0b0100), Op2(0b000),
 	  NULL, reset_unknown, PAR_EL1 },
@@ -224,17 +260,17 @@ static const struct sys_reg_desc sys_reg_descs[] = {
 
 	/* MAIR_EL1 */
 	{ Op0(0b11), Op1(0b000), CRn(0b1010), CRm(0b0010), Op2(0b000),
-	  NULL, reset_unknown, MAIR_EL1 },
+	  access_vm_reg, reset_unknown, MAIR_EL1 },
 	/* AMAIR_EL1 */
 	{ Op0(0b11), Op1(0b000), CRn(0b1010), CRm(0b0011), Op2(0b000),
-	  NULL, reset_amair_el1, AMAIR_EL1 },
+	  access_vm_reg, reset_amair_el1, AMAIR_EL1 },
 
 	/* VBAR_EL1 */
 	{ Op0(0b11), Op1(0b000), CRn(0b1100), CRm(0b0000), Op2(0b000),
 	  NULL, reset_val, VBAR_EL1, 0 },
 	/* CONTEXTIDR_EL1 */
 	{ Op0(0b11), Op1(0b000), CRn(0b1101), CRm(0b0000), Op2(0b001),
-	  NULL, reset_val, CONTEXTIDR_EL1, 0 },
+	  access_vm_reg, reset_val, CONTEXTIDR_EL1, 0 },
 	/* TPIDR_EL1 */
 	{ Op0(0b11), Op1(0b000), CRn(0b1101), CRm(0b0000), Op2(0b100),
 	  NULL, reset_unknown, TPIDR_EL1 },
