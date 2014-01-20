@@ -348,14 +348,7 @@ static int xgene_pcie_setup(int nr, struct pci_sys_data *sys)
 
 static int xgene_pcie_map_irq(const struct pci_dev *pci_dev, u8 slot, u8 pin)
 {
-	struct of_irq oirq;
-	int ret;
-
-	ret = of_irq_map_pci(pci_dev, &oirq);
-	if (ret)
-		return ret;
-	return irq_create_of_mapping(oirq.controller, oirq.specifier,
-			oirq.size);
+	return of_irq_parse_and_map_pci(pci_dev, slot, pin);
 }
 
 static struct pci_bus __init *xgene_pcie_scan_bus(int nr,
