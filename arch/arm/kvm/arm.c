@@ -193,6 +193,7 @@ int kvm_dev_ioctl_check_extension(long ext)
 	case KVM_CAP_DESTROY_MEMORY_REGION_WORKS:
 	case KVM_CAP_ONE_REG:
 	case KVM_CAP_ARM_PSCI:
+	case KVM_CAP_ARM_PSCI_0_2:
 		r = 1;
 		break;
 	case KVM_CAP_COALESCED_MMIO:
@@ -483,7 +484,10 @@ static int kvm_vcpu_first_run_init(struct kvm_vcpu *vcpu)
 	 * PSCI code.
 	 */
 	if (test_and_clear_bit(KVM_ARM_VCPU_POWER_OFF, vcpu->arch.features)) {
-		*vcpu_reg(vcpu, 0) = KVM_PSCI_FN_CPU_OFF;
+		if (test_bit(KVM_ARM_VCPU_PSCI_0_2, vcpu->arch.features))
+			*vcpu_reg(vcpu, 0) = KVM_PSCI_0_2_FN_CPU_OFF;
+		else
+			*vcpu_reg(vcpu, 0) = KVM_PSCI_FN_CPU_OFF;
 		kvm_psci_call(vcpu);
 	}
 
