@@ -27,6 +27,7 @@
 #include <asm/kvm_host.h>
 #include <asm/kvm_emulate.h>
 #include <asm/kvm_coproc.h>
+#include <asm/kvm_mmu.h>
 #include <asm/cacheflush.h>
 #include <asm/cputype.h>
 #include <trace/events/kvm.h>
@@ -163,8 +164,10 @@ static bool access_sctlr(struct kvm_vcpu *vcpu,
 	else
 		vcpu_cp15(vcpu, r->reg) = val & 0xffffffffUL;
 
-	if ((val & (0b101)) == 0b101)	/* MMU+Caches enabled? */
+	if ((val & (0b101)) == 0b101) {	/* MMU+Caches enabled? */
 		vcpu->arch.hcr_el2 &= ~HCR_TVM;
+		stage2_flush_vm(vcpu->kvm);
+	}
 
 	return true;
 }
