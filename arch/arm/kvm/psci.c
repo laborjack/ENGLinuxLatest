@@ -93,8 +93,26 @@ int kvm_psci_version(struct kvm_vcpu *vcpu)
 	return KVM_ARM_PSCI_0_1;
 }
 
-static bool kvm_psci_0_2_call(struct kvm_vcpu *vcpu)
+static inline void kvm_prepare_system_event(struct kvm_vcpu *vcpu, u32 type)
 {
+	memset(&vcpu->run->system_event, 0, sizeof(vcpu->run->system_event));
+	vcpu->run->system_event.type = type;
+	vcpu->run->exit_reason = KVM_EXIT_SYSTEM_EVENT;
+}
+
+static void kvm_psci_system_off(struct kvm_vcpu *vcpu)
+{
+	kvm_prepare_system_event(vcpu, KVM_SYSTEM_EVENT_SHUTDOWN);
+}
+
+static void kvm_psci_system_reset(struct kvm_vcpu *vcpu)
+{
+	kvm_prepare_system_event(vcpu, KVM_SYSTEM_EVENT_RESET);
+}
+
+static int kvm_psci_0_2_call(struct kvm_vcpu *vcpu)
+{
+	int ret = 1;
 	unsigned long psci_fn = *vcpu_reg(vcpu, 0) & ~((u32) 0);
 	unsigned long val;
 
@@ -114,13 +132,21 @@ static bool kvm_psci_0_2_call(struct kvm_vcpu *vcpu)
 	case KVM_PSCI_0_2_FN64_CPU_ON:
 		val = kvm_psci_vcpu_on(vcpu);
 		break;
+	case KVM_PSCI_0_2_FN_SYSTEM_OFF:
+		kvm_psci_system_off(vcpu);
+		val = KVM_PSCI_RET_SUCCESS;
+		ret = 0;
+		break;
+	case KVM_PSCI_0_2_FN_SYSTEM_RESET:
+		kvm_psci_system_reset(vcpu);
+		val = KVM_PSCI_RET_SUCCESS;
+		ret = 0;
+		break;
 	case KVM_PSCI_0_2_FN_CPU_SUSPEND:
 	case KVM_PSCI_0_2_FN_AFFINITY_INFO:
 	case KVM_PSCI_0_2_FN_MIGRATE:
 	case KVM_PSCI_0_2_FN_MIGRATE_INFO_TYPE:
 	case KVM_PSCI_0_2_FN_MIGRATE_INFO_UP_CPU:
-	case KVM_PSCI_0_2_FN_SYSTEM_OFF:
-	case KVM_PSCI_0_2_FN_SYSTEM_RESET:
 	case KVM_PSCI_0_2_FN64_CPU_SUSPEND:
 	case KVM_PSCI_0_2_FN64_AFFINITY_INFO:
 	case KVM_PSCI_0_2_FN64_MIGRATE:
@@ -128,14 +154,14 @@ static bool kvm_psci_0_2_call(struct kvm_vcpu *vcpu)
 		val = KVM_PSCI_RET_NI;
 		break;
 	default:
-		return false;
+		return -EINVAL;
 	}
 
 	*vcpu_reg(vcpu, 0) = val;
-	return true;
+	return ret;
 }
 
-static bool kvm_psci_0_1_call(struct kvm_vcpu *vcpu)
+static int kvm_psci_0_1_call(struct kvm_vcpu *vcpu)
 {
 	unsigned long psci_fn = *vcpu_reg(vcpu, 0) & ~((u32) 0);
 	unsigned long val;
@@ -153,11 +179,11 @@ static bool kvm_psci_0_1_call(struct kvm_vcpu *vcpu)
 		val = KVM_PSCI_RET_NI;
 		break;
 	default:
-		return false;
+		return -EINVAL;
 	}
 
 	*vcpu_reg(vcpu, 0) = val;
-	return true;
+	return 1;
 }
 
 /**
@@ -165,12 +191,16 @@ static bool kvm_psci_0_1_call(struct kvm_vcpu *vcpu)
  * @vcpu: Pointer to the VCPU struct
  *
  * Handle PSCI calls from guests through traps from HVC instructions.
- * The calling convention is similar to SMC calls to the secure world where
- * the function number is placed in r0 and this function returns true if the
- * function number specified in r0 is withing the PSCI range, and false
- * otherwise.
+ * The calling convention is similar to SMC calls to the secure world
+ * where the function number is placed in r0.
+ *
+ * This function returns: > 0 (success), 0 (success but exit to user
+ * space), and < 0 (errors)
+ *
+ * Errors:
+ * -EINVAL: Unrecognized PSCI function
  */
-bool kvm_psci_call(struct kvm_vcpu *vcpu)
+int kvm_psci_call(struct kvm_vcpu *vcpu)
 {
 	switch (kvm_psci_version(vcpu)) {
 	case KVM_ARM_PSCI_0_2:
@@ -178,6 +208,6 @@ bool kvm_psci_call(struct kvm_vcpu *vcpu)
 	case KVM_ARM_PSCI_0_1:
 		return kvm_psci_0_1_call(vcpu); 
 	default:
-		return false;
+		return -EINVAL;
 	};
 }
