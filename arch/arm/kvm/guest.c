@@ -307,6 +307,9 @@ int kvm_vcpu_set_target(struct kvm_vcpu *vcpu,
 		if (test_bit(i, (void *)init->features)) {
 			if (i >= KVM_VCPU_MAX_FEATURES)
 				return -ENOENT;
+			/* Don't allow setting experimental features */
+			if (i == KVM_ARM_VCPU_PSCI_0_2)
+				return -ENOENT;
 			set_bit(i, vcpu->arch.features);
 		}
 	}
