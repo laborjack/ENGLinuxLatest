@@ -32,12 +32,14 @@ static void kvm_psci_vcpu_off(struct kvm_vcpu *vcpu)
 	vcpu->arch.pause = true;
 }
 
-static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
+static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu,
+				      int psci_version)
 {
 	struct kvm *kvm = source_vcpu->kvm;
 	struct kvm_vcpu *vcpu = NULL, *tmp;
 	wait_queue_head_t *wq;
 	unsigned long cpu_id;
+	unsigned long context_id;
 	unsigned long mpidr;
 	phys_addr_t target_pc;
 	int i;
@@ -62,6 +64,7 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
 		return KVM_PSCI_RET_INVAL;
 
 	target_pc = *vcpu_reg(source_vcpu, 2);
+	context_id = *vcpu_reg(source_vcpu, 3);
 
 	kvm_reset_vcpu(vcpu);
 
@@ -76,6 +79,8 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
 		kvm_vcpu_set_be(vcpu);
 
 	*vcpu_pc(vcpu) = target_pc;
+	if (psci_version != KVM_ARM_PSCI_0_1)
+		*vcpu_reg(vcpu, 0) = context_id;
 	vcpu->arch.pause = false;
 	smp_mb();		/* Make sure the above is visible */
 
@@ -180,7 +185,7 @@ static int kvm_psci_0_2_call(struct kvm_vcpu *vcpu)
 		break;
 	case KVM_PSCI_0_2_FN_CPU_ON:
 	case KVM_PSCI_0_2_FN64_CPU_ON:
-		val = kvm_psci_vcpu_on(vcpu);
+		val = kvm_psci_vcpu_on(vcpu, KVM_ARM_PSCI_0_2);
 		break;
 	case KVM_PSCI_0_2_FN_AFFINITY_INFO:
 	case KVM_PSCI_0_2_FN64_AFFINITY_INFO:
@@ -234,7 +239,7 @@ static int kvm_psci_0_1_call(struct kvm_vcpu *vcpu)
 		val = KVM_PSCI_RET_SUCCESS;
 		break;
 	case KVM_PSCI_FN_CPU_ON:
-		val = kvm_psci_vcpu_on(vcpu);
+		val = kvm_psci_vcpu_on(vcpu, KVM_ARM_PSCI_0_1);
 		break;
 	case KVM_PSCI_FN_CPU_SUSPEND:
 	case KVM_PSCI_FN_MIGRATE:
