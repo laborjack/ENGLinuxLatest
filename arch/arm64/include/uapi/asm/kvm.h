@@ -77,6 +77,7 @@ struct kvm_regs {
 
 #define KVM_ARM_VCPU_POWER_OFF		0 /* CPU is started in OFF state */
 #define KVM_ARM_VCPU_EL1_32BIT		1 /* CPU running a 32bit VM */
+#define KVM_ARM_VCPU_PSCI_0_2		2 /* CPU uses PSCI v0.2 */
 
 struct kvm_vcpu_init {
 	__u32 target;
@@ -177,7 +178,7 @@ struct kvm_arch_memory_slot {
 /* Highest supported SPI, from VGIC_NR_IRQS */
 #define KVM_ARM_IRQ_GIC_MAX		127
 
-/* PSCI interface */
+/* PSCI v0.1 interface */
 #define KVM_PSCI_FN_BASE		0x95c1ba5e
 #define KVM_PSCI_FN(n)			(KVM_PSCI_FN_BASE + (n))
 
@@ -186,10 +187,42 @@ struct kvm_arch_memory_slot {
 #define KVM_PSCI_FN_CPU_ON		KVM_PSCI_FN(2)
 #define KVM_PSCI_FN_MIGRATE		KVM_PSCI_FN(3)
 
+/* PSCI v0.2 interface */
+#define KVM_PSCI_0_2_FN_BASE		0x84000000
+#define KVM_PSCI_0_2_FN(n)		(KVM_PSCI_0_2_FN_BASE + (n))
+#define KVM_PSCI_0_2_FN64_BASE		0xC4000000
+#define KVM_PSCI_0_2_FN64(n)		(KVM_PSCI_0_2_FN64_BASE + (n))
+
+#define KVM_PSCI_0_2_FN_PSCI_VERSION	KVM_PSCI_0_2_FN(0)
+#define KVM_PSCI_0_2_FN_CPU_SUSPEND	KVM_PSCI_0_2_FN(1)
+#define KVM_PSCI_0_2_FN_CPU_OFF		KVM_PSCI_0_2_FN(2)
+#define KVM_PSCI_0_2_FN_CPU_ON		KVM_PSCI_0_2_FN(3)
+#define KVM_PSCI_0_2_FN_AFFINITY_INFO	KVM_PSCI_0_2_FN(4)
+#define KVM_PSCI_0_2_FN_MIGRATE		KVM_PSCI_0_2_FN(5)
+#define KVM_PSCI_0_2_FN_MIGRATE_INFO_TYPE \
+					KVM_PSCI_0_2_FN(6)
+#define KVM_PSCI_0_2_FN_MIGRATE_INFO_UP_CPU \
+					KVM_PSCI_0_2_FN(7)
+#define KVM_PSCI_0_2_FN_SYSTEM_OFF	KVM_PSCI_0_2_FN(8)
+#define KVM_PSCI_0_2_FN_SYSTEM_RESET	KVM_PSCI_0_2_FN(9)
+
+#define KVM_PSCI_0_2_FN64_CPU_SUSPEND	KVM_PSCI_0_2_FN64(1)
+#define KVM_PSCI_0_2_FN64_CPU_ON	KVM_PSCI_0_2_FN64(3)
+#define KVM_PSCI_0_2_FN64_AFFINITY_INFO	KVM_PSCI_0_2_FN64(4)
+#define KVM_PSCI_0_2_FN64_MIGRATE	KVM_PSCI_0_2_FN64(5)
+#define KVM_PSCI_0_2_FN64_MIGRATE_INFO_UP_CPU \
+					KVM_PSCI_0_2_FN64(7)
+
+/* PSCI return values */
 #define KVM_PSCI_RET_SUCCESS		0
 #define KVM_PSCI_RET_NI			((unsigned long)-1)
 #define KVM_PSCI_RET_INVAL		((unsigned long)-2)
 #define KVM_PSCI_RET_DENIED		((unsigned long)-3)
+#define KVM_PSCI_RET_ALREADY_ON		((unsigned long)-4)
+#define KVM_PSCI_RET_ON_PENDING		((unsigned long)-5)
+#define KVM_PSCI_RET_INTERNAL_FAILURE	((unsigned long)-6)
+#define KVM_PSCI_RET_NOT_PRESENT	((unsigned long)-7)
+#define KVM_PSCI_RET_DISABLED		((unsigned long)-8)
 
 #endif
 
