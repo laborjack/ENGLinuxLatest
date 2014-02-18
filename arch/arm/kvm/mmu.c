@@ -187,6 +187,89 @@ static void unmap_range(struct kvm *kvm, pgd_t *pgdp,
 	}
 }
 
+void stage2_flush_ptes(struct kvm *kvm, pmd_t *pmd,
+		       unsigned long addr, unsigned long end)
+{
+	pte_t *pte;
+
+	pte = pte_offset_kernel(pmd, addr);
+	do {
+		if (!pte_none(*pte)) {
+			hva_t hva = gfn_to_hva(kvm, addr >> PAGE_SHIFT);
+			kvm_flush_dcache_to_poc((void*)hva, PAGE_SIZE);
+		}
+	} while(pte++, addr += PAGE_SIZE, addr != end);
+}
+
+void stage2_flush_pmds(struct kvm *kvm, pud_t *pud,
+		       unsigned long addr, unsigned long end)
+{
+	pmd_t *pmd;
+	unsigned long next;
+
+	pmd = pmd_offset(pud, addr);
+	do {
+		next = pmd_addr_end(addr, end);
+		if (!pmd_none(*pmd)) {
+			if (kvm_pmd_huge(*pmd)) {
+				hva_t hva = gfn_to_hva(kvm, addr >> PAGE_SHIFT);
+				kvm_flush_dcache_to_poc((void*)hva, PMD_SIZE);
+			} else {
+				stage2_flush_ptes(kvm, pmd, addr, next);
+			}
+		}
+	} while(pmd++, addr = next, addr != end);
+}
+
+void stage2_flush_puds(struct kvm *kvm, pgd_t *pgd,
+		       unsigned long addr, unsigned long end)
+{
+	pud_t *pud;
+	unsigned long next;
+
+	pud = pud_offset(pgd, addr);
+	do {
+		next = pud_addr_end(addr, end);
+		if (!pud_none(*pud)) {
+			if (pud_huge(*pud)) {
+				hva_t hva = gfn_to_hva(kvm, addr >> PAGE_SHIFT);
+				kvm_flush_dcache_to_poc((void*)hva, PUD_SIZE);
+			} else {
+				stage2_flush_pmds(kvm, pud, addr, next);
+			}
+		}
+	} while(pud++, addr = next, addr != end);
+}
+
+static void stage2_flush_memslot(struct kvm *kvm,
+				 struct kvm_memory_slot *memslot)
+{
+	unsigned long addr = memslot->base_gfn << PAGE_SHIFT;
+	unsigned long end = addr + PAGE_SIZE * memslot->npages;
+	unsigned long next;
+	pgd_t *pgd;
+
+	pgd = kvm->arch.pgd + pgd_index(addr);
+	do {
+		next = pgd_addr_end(addr, end);
+		stage2_flush_puds(kvm, pgd, addr, next);
+	} while(pgd++, addr = next, addr != end);
+}
+
+void stage2_flush_vm(struct kvm *kvm)
+{
+	struct kvm_memslots *slots;
+	struct kvm_memory_slot *memslot;
+
+	spin_lock(&kvm->mmu_lock);
+
+	slots = kvm_memslots(kvm);
+	kvm_for_each_memslot(memslot, slots)
+		stage2_flush_memslot(kvm, memslot);
+
+	spin_unlock(&kvm->mmu_lock);
+}
+
 /**
  * free_boot_hyp_pgd - free HYP boot page tables
  *
