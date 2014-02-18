@@ -1,0 +1,61 @@
+* APM X-Gene 6.0 Gb/s SATA PHY nodes
+
+SATA PHY nodes are defined to describe on-chip Serial ATA PHY. Each SATA PHY
+(pair of PHY) has its own node.
+
+Required properties:
+- compatible		: Shall be "apm,xgene-ahci-phy" or
+			  "apm,xgene-ahci-phy2". The "apm,xgene-ahci-phy"
+			  describes an port shared with SGMII Ethernet port.
+			  The "apm,xgene-ahci-phy2" describes an port not
+			  shared with SGMII and the PLL located at another
+			  memory resource region.
+- reg			: First PHY memory resource
+			  Second separate PHY PLL clock memory resource if
+			  type "apm,xgene-ahci-phy2"
+- #phy-cells		: Shall be 0
+
+Optional properties:
+- status		: Shall be "ok" if enabled or "na" if disabled. Default
+			  is "ok".
+- txeyetuning		: Manual control to fine tune the capture of the serial
+			  bit lines from the automatic calibrated position.
+			  Two set of 3-tuple setting for Gen1, Gen2, and Gen3.
+			  Range from 0 to 0x7f. Default is 0xa.
+- txeyedirection	: Eye tuning manual control direction. 0 means sample
+			  data earlier than the nominal sampling point. 1 means
+			  sample data later than the nominal sampling point.
+			  Two set of 3-tuple setting for Gen1, Gen2, and Gen3.
+			  Default is 0x0.
+- txboostgain		: Frequency boost and DC gain control. Two set of
+			  3-tuple setting for Gen1, Gen2, and Gen3. Range is
+			  between 0 to 0x1f. Default is 0x3.
+- txspeed		: Tx operating speed. Two set of 3-tuple for
+			  Gen1 (0x1), Gen2 (0x3), and Gen3 (0x7). Default is
+			  0x7.
+
+NOTE: PHY override parameters are board specific setting.
+
+Example:
+		sataphy0: sataphy@1f210000 {
+			compatible = "apm,xgene-ahci-phy";
+			reg = <0x0 0x1f210000 0x0 0x10000>;
+			#phy-cells = <0>;
+			status = "na";
+		};
+
+		sataphy1: sataphy@1f220000 {
+			compatible = "apm,xgene-ahci-phy";
+			reg = <0x0 0x1f220000 0x0 0x10000>;
+			#phy-cells = <0>;
+			status = "ok";
+		};
+
+		sataphy2: sataphy@1f230000 {
+			compatible = "apm,xgene-ahci-phy2";
+			reg = <0x0 0x1f230000 0x0 0x10000
+			       0x0 0x1f2d0000 0x0 0x10000 >;
+			#phy-cells = <0>;
+			status = "ok";
+		};
+
