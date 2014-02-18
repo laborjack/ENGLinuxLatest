@@ -27,6 +27,7 @@ struct phy;
  * @exit: operation to be performed while exiting
  * @power_on: powering on the phy
  * @power_off: powering off the phy
+ * @set_speed: set operation speed in hz
  * @owner: the module owner containing the ops
  */
 struct phy_ops {
@@ -34,6 +35,7 @@ struct phy_ops {
 	int	(*exit)(struct phy *phy);
 	int	(*power_on)(struct phy *phy);
 	int	(*power_off)(struct phy *phy);
+	int	(*set_speed)(struct phy *phy, int lane, u64 speed);
 	struct module *owner;
 };
 
@@ -308,5 +310,25 @@ static inline void devm_of_phy_provider_unregister(struct device *dev,
 {
 }
 #endif
+
+static inline int phy_set_speed(struct phy *phy, int lane, u64 speed)
+{
+	int ret = -ENOTSUPP;
+
+	mutex_lock(&phy->mutex);
+	if (phy->ops->set_speed) {
+		ret =  phy->ops->set_speed(phy, lane, speed);
+		if (ret < 0) {
+			dev_err(&phy->dev, "phy set speed failed --> %d\n",
+				ret);
+			goto out;
+		}
+	}
+
+out:
+	mutex_unlock(&phy->mutex);
+
+	return ret;
+}
 
 #endif /* __DRIVERS_PHY_H */
