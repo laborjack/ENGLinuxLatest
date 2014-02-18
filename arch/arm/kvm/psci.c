@@ -120,7 +120,8 @@ static unsigned long kvm_psci_vcpu_affinity_info(struct kvm_vcpu *vcpu)
 	/* Ignore other bits of target affinity */
 	target_affinity &= target_affinity_mask;
 
-	/* If one or more VCPU matching target affinity are running
+	/*
+	 * If one or more VCPU matching target affinity are running
 	 * then return 0 (ON) else return 1 (OFF)
 	 */
 	kvm_for_each_vcpu(i, tmp, kvm) {
@@ -185,6 +186,21 @@ static int kvm_psci_0_2_call(struct kvm_vcpu *vcpu)
 	case KVM_PSCI_0_2_FN64_AFFINITY_INFO:
 		val = kvm_psci_vcpu_affinity_info(vcpu);
 		break;
+	case KVM_PSCI_0_2_FN_MIGRATE:
+	case KVM_PSCI_0_2_FN64_MIGRATE:
+		val = KVM_PSCI_RET_NI;
+		break;
+	case KVM_PSCI_0_2_FN_MIGRATE_INFO_TYPE:
+		/*
+		 * Trusted OS is either not present or
+		 * does not require migration
+		 */
+		val = 2;
+		break;
+	case KVM_PSCI_0_2_FN_MIGRATE_INFO_UP_CPU:
+	case KVM_PSCI_0_2_FN64_MIGRATE_INFO_UP_CPU:
+		val = KVM_PSCI_RET_NI;
+		break;
 	case KVM_PSCI_0_2_FN_SYSTEM_OFF:
 		kvm_psci_system_off(vcpu);
 		val = KVM_PSCI_RET_SUCCESS;
@@ -196,12 +212,7 @@ static int kvm_psci_0_2_call(struct kvm_vcpu *vcpu)
 		ret = 0;
 		break;
 	case KVM_PSCI_0_2_FN_CPU_SUSPEND:
-	case KVM_PSCI_0_2_FN_MIGRATE:
-	case KVM_PSCI_0_2_FN_MIGRATE_INFO_TYPE:
-	case KVM_PSCI_0_2_FN_MIGRATE_INFO_UP_CPU:
 	case KVM_PSCI_0_2_FN64_CPU_SUSPEND:
-	case KVM_PSCI_0_2_FN64_MIGRATE:
-	case KVM_PSCI_0_2_FN64_MIGRATE_INFO_UP_CPU:
 		val = KVM_PSCI_RET_NI;
 		break;
 	default:
