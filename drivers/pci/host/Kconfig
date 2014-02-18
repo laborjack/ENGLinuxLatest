@@ -33,4 +33,13 @@ config PCI_RCAR_GEN2
 	  There are 3 internal PCI controllers available with a single
 	  built-in EHCI/OHCI host controller present on each one.
 
+config  PCI_XGENE
+	bool "X-Gene PCIe controller"
+	depends on PCI
+	default y
+	help
+	Enter 'Y' to enable APM X-Gene PCIe controller.
+	X-Gene PCIe controller supports 2x, 4x, 8x link widths
+	and GEN1, GEN2, GEN3 link speeds in PCIe root complex
+	and endpoint mode of operation.
 endmenu
