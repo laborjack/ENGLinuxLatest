@@ -178,6 +178,12 @@
 			};
 		};
 
+		reboot@0x17000014 {
+			compatible = "apm,xgene-reboot";
+			reg = <0x0 0x17000014 0x0 0x100>;
+			mask = <0x1>;
+		};
+
 		serial0: serial@1c020000 {
 			device_type = "serial";
 			compatible = "ns16550";
