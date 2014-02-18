@@ -112,6 +112,14 @@ config SATA_XGENE_PHY
 	help
 	  This option enables support for APM X-Gene SoC SATA PHY.
 
+config SATA_XGENE
+	tristate "APM X-Gene 6.0Gbps SATA host controller support"
+	depends on ARM64 || COMPILE_TEST
+	select SATA_AHCI_PLATFORM
+	select SATA_XGENE_PHY
+	help
+	  This option enables support for APM X-Gene SoC SATA host controller.
+
 config SATA_FSL
 	tristate "Freescale 3.0Gbps SATA support"
 	depends on FSL_SOC
