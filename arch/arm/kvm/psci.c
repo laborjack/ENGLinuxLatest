@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <linux/smp.h>
 #include <linux/kvm_host.h>
 #include <linux/wait.h>
 
@@ -27,9 +28,81 @@
  * as described in ARM document number ARM DEN 0022A.
  */
 
+struct psci_suspend_info {
+	struct kvm_vcpu *vcpu;
+	unsigned long saved_entry;
+	unsigned long saved_context_id;
+};
+
+static void psci_do_suspend(void *context)
+{
+	struct psci_suspend_info *sinfo = context;
+
+	sinfo->vcpu->arch.pause = true;
+	sinfo->vcpu->arch.suspend = true;
+	sinfo->vcpu->arch.suspend_entry = sinfo->saved_entry;
+	sinfo->vcpu->arch.suspend_context_id = sinfo->saved_context_id;
+}
+
+static unsigned long kvm_psci_vcpu_suspend(struct kvm_vcpu *vcpu)
+{
+	int i;
+	unsigned long mpidr;
+	unsigned long target_affinity;
+	unsigned long target_affinity_mask;
+	unsigned long lowest_affinity_level;
+	struct kvm *kvm = vcpu->kvm;
+	struct kvm_vcpu *tmp;
+	struct psci_suspend_info sinfo;
+
+	target_affinity = kvm_vcpu_get_mpidr(vcpu);
+	lowest_affinity_level = (*vcpu_reg(vcpu, 1) >> 24) & 0x3;
+
+	/* Determine target affinity mask */
+	target_affinity_mask = MPIDR_HWID_BITMASK;
+	switch (lowest_affinity_level) {
+	case 0: /* All affinity levels are valid */
+		target_affinity_mask &= ~0x0UL;
+		break;
+	case 1: /* Aff0 ignored */
+		target_affinity_mask &= ~0xFFUL;
+		break;
+	case 2: /* Aff0 and Aff1 ignored */
+		target_affinity_mask &= ~0xFFFFUL;
+		break;
+	case 3: /* Aff0, Aff1, and Aff2 ignored */
+		target_affinity_mask &= ~0xFFFFFFUL;
+		break;
+	default:
+		return KVM_PSCI_RET_INVAL;
+	};
+
+	/* Ignore other bits of target affinity */
+	target_affinity &= target_affinity_mask;
+
+	/* Prepare suspend info */
+	sinfo.vcpu = NULL;
+	sinfo.saved_entry = *vcpu_reg(vcpu, 2);
+	sinfo.saved_context_id = *vcpu_reg(vcpu, 3);
+
+	/* Suspend all VCPUs within target affinity */
+	kvm_for_each_vcpu(i, tmp, kvm) {
+		mpidr = kvm_vcpu_get_mpidr(tmp);
+		if (((mpidr & target_affinity_mask) == target_affinity) &&
+		    !tmp->arch.suspend) {
+			sinfo.vcpu = tmp;
+			smp_call_function_single(tmp->cpu,
+						 psci_do_suspend, &sinfo, 1);
+		}
+	}
+
+	return KVM_PSCI_RET_SUCCESS;
+}
+
 static void kvm_psci_vcpu_off(struct kvm_vcpu *vcpu)
 {
 	vcpu->arch.pause = true;
+	vcpu->arch.suspend = false;
 }
 
 static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu,
@@ -179,6 +252,10 @@ static int kvm_psci_0_2_call(struct kvm_vcpu *vcpu)
 		 */
 		val = 2;
 		break;
+	case KVM_PSCI_0_2_FN_CPU_SUSPEND:
+	case KVM_PSCI_0_2_FN64_CPU_SUSPEND:
+		val = kvm_psci_vcpu_suspend(vcpu);
+		break;
 	case KVM_PSCI_0_2_FN_CPU_OFF:
 		kvm_psci_vcpu_off(vcpu);
 		val = KVM_PSCI_RET_SUCCESS;
@@ -216,10 +293,6 @@ static int kvm_psci_0_2_call(struct kvm_vcpu *vcpu)
 		val = KVM_PSCI_RET_SUCCESS;
 		ret = 0;
 		break;
-	case KVM_PSCI_0_2_FN_CPU_SUSPEND:
-	case KVM_PSCI_0_2_FN64_CPU_SUSPEND:
-		val = KVM_PSCI_RET_NI;
-		break;
 	default:
 		return -EINVAL;
 	}
@@ -251,6 +324,13 @@ static int kvm_psci_0_1_call(struct kvm_vcpu *vcpu)
 
 	*vcpu_reg(vcpu, 0) = val;
 	return 1;
+}
+
+void kvm_psci_reset(struct kvm_vcpu *vcpu)
+{
+	vcpu->arch.suspend = false;
+	vcpu->arch.suspend_entry = 0;
+	vcpu->arch.suspend_context_id = 0;
 }
 
 /**

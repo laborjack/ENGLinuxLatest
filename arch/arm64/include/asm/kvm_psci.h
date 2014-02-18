@@ -22,6 +22,7 @@
 #define KVM_ARM_PSCI_0_2	2
 
 int kvm_psci_version(struct kvm_vcpu *vcpu);
+void kvm_psci_reset(struct kvm_vcpu *vcpu);
 int kvm_psci_call(struct kvm_vcpu *vcpu);
 
 #endif /* __ARM64_KVM_PSCI_H__ */

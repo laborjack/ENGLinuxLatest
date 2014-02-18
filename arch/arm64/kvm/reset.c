@@ -29,6 +29,7 @@
 #include <asm/ptrace.h>
 #include <asm/kvm_arm.h>
 #include <asm/kvm_coproc.h>
+#include <asm/kvm_psci.h>
 
 /*
  * ARMv8 Reset Values
@@ -107,6 +108,9 @@ int kvm_reset_vcpu(struct kvm_vcpu *vcpu)
 
 	/* Reset timer */
 	kvm_timer_vcpu_reset(vcpu, cpu_vtimer_irq);
+
+	/* Reset PSCI state */
+	kvm_psci_reset(vcpu);
 
 	return 0;
 }

@@ -131,6 +131,11 @@ struct kvm_vcpu_arch {
 	/* Don't run the guest on this vcpu */
 	bool pause;
 
+	/* PSCI suspend state */
+	bool suspend;
+	u32 suspend_entry;
+	u32 suspend_context_id;
+
 	/* IO related fields */
 	struct kvm_decode mmio_decode;
 
