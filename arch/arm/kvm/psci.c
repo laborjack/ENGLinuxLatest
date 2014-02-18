@@ -85,6 +85,55 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
 	return KVM_PSCI_RET_SUCCESS;
 }
 
+static unsigned long kvm_psci_vcpu_affinity_info(struct kvm_vcpu *vcpu)
+{
+	int i;
+	unsigned long mpidr;
+	unsigned long target_affinity;
+	unsigned long target_affinity_mask;
+	unsigned long lowest_affinity_level;
+	struct kvm *kvm = vcpu->kvm;
+	struct kvm_vcpu *tmp;
+
+	target_affinity = *vcpu_reg(vcpu, 1);
+	lowest_affinity_level = *vcpu_reg(vcpu, 2);
+
+	/* Determine target affinity mask */
+	target_affinity_mask = MPIDR_HWID_BITMASK;
+	switch (lowest_affinity_level) {
+	case 0: /* All affinity levels are valid */
+		target_affinity_mask &= ~0x0UL;
+		break;
+	case 1: /* Aff0 ignored */
+		target_affinity_mask &= ~0xFFUL;
+		break;
+	case 2: /* Aff0 and Aff1 ignored */
+		target_affinity_mask &= ~0xFFFFUL;
+		break;
+	case 3: /* Aff0, Aff1, and Aff2 ignored */
+		target_affinity_mask &= ~0xFFFFFFUL;
+		break;
+	default:
+		return KVM_PSCI_RET_INVAL;
+	};
+
+	/* Ignore other bits of target affinity */
+	target_affinity &= target_affinity_mask;
+
+	/* If one or more VCPU matching target affinity are running
+	 * then return 0 (ON) else return 1 (OFF)
+	 */
+	kvm_for_each_vcpu(i, tmp, kvm) {
+		mpidr = kvm_vcpu_get_mpidr(tmp);
+		if (((mpidr & target_affinity_mask) == target_affinity) &&
+		    !tmp->arch.pause) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
 static inline void kvm_prepare_system_event(struct kvm_vcpu *vcpu, u32 type)
 {
 	memset(&vcpu->run->system_event, 0, sizeof(vcpu->run->system_event));
@@ -132,6 +181,10 @@ static int kvm_psci_0_2_call(struct kvm_vcpu *vcpu)
 	case KVM_PSCI_0_2_FN64_CPU_ON:
 		val = kvm_psci_vcpu_on(vcpu);
 		break;
+	case KVM_PSCI_0_2_FN_AFFINITY_INFO:
+	case KVM_PSCI_0_2_FN64_AFFINITY_INFO:
+		val = kvm_psci_vcpu_affinity_info(vcpu);
+		break;
 	case KVM_PSCI_0_2_FN_SYSTEM_OFF:
 		kvm_psci_system_off(vcpu);
 		val = KVM_PSCI_RET_SUCCESS;
@@ -143,12 +196,10 @@ static int kvm_psci_0_2_call(struct kvm_vcpu *vcpu)
 		ret = 0;
 		break;
 	case KVM_PSCI_0_2_FN_CPU_SUSPEND:
-	case KVM_PSCI_0_2_FN_AFFINITY_INFO:
 	case KVM_PSCI_0_2_FN_MIGRATE:
 	case KVM_PSCI_0_2_FN_MIGRATE_INFO_TYPE:
 	case KVM_PSCI_0_2_FN_MIGRATE_INFO_UP_CPU:
 	case KVM_PSCI_0_2_FN64_CPU_SUSPEND:
-	case KVM_PSCI_0_2_FN64_AFFINITY_INFO:
 	case KVM_PSCI_0_2_FN64_MIGRATE:
 	case KVM_PSCI_0_2_FN64_MIGRATE_INFO_UP_CPU:
 		val = KVM_PSCI_RET_NI;
