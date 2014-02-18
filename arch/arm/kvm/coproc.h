@@ -135,13 +135,13 @@ static inline int cmp_reg(const struct coproc_reg *i1,
 		return -1;
 	if (i1->CRn != i2->CRn)
 		return i1->CRn - i2->CRn;
-	if (i1->is_64 != i2->is_64)
-		return i2->is_64 - i1->is_64;
 	if (i1->CRm != i2->CRm)
 		return i1->CRm - i2->CRm;
 	if (i1->Op1 != i2->Op1)
 		return i1->Op1 - i2->Op1;
-	return i1->Op2 - i2->Op2;
+	if (i1->Op2 != i2->Op2)
+		return i1->Op2 - i2->Op2;
+	return i2->is_64 - i1->is_64;
 }
 
 
@@ -152,5 +152,9 @@ static inline int cmp_reg(const struct coproc_reg *i1,
 #define Op2(_x) 	.Op2 = _x
 #define is64		.is_64 = true
 #define is32		.is_64 = false
+
+bool access_sctlr(struct kvm_vcpu *vcpu,
+		  const struct coproc_params *p,
+		  const struct coproc_reg *r);
 
 #endif /* __ARM_KVM_COPROC_LOCAL_H__ */
