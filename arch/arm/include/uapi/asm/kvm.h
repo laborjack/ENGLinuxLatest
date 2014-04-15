@@ -20,6 +20,7 @@
 #define __ARM_KVM_H__
 
 #include <linux/types.h>
+#include <linux/psci.h>
 #include <asm/ptrace.h>
 
 #define __KVM_HAVE_GUEST_DEBUG
@@ -83,6 +84,7 @@ struct kvm_regs {
 #define KVM_VGIC_V2_CPU_SIZE		0x2000
 
 #define KVM_ARM_VCPU_POWER_OFF		0 /* CPU is started in OFF state */
+#define KVM_ARM_VCPU_PSCI_0_2		1 /* CPU uses PSCI v0.2 */
 
 struct kvm_vcpu_init {
 	__u32 target;
@@ -194,16 +196,15 @@ struct kvm_arch_memory_slot {
 
 /* PSCI interface */
 #define KVM_PSCI_FN_BASE		0x95c1ba5e
-#define KVM_PSCI_FN(n)			(KVM_PSCI_FN_BASE + (n))
 
-#define KVM_PSCI_FN_CPU_SUSPEND		KVM_PSCI_FN(0)
-#define KVM_PSCI_FN_CPU_OFF		KVM_PSCI_FN(1)
-#define KVM_PSCI_FN_CPU_ON		KVM_PSCI_FN(2)
-#define KVM_PSCI_FN_MIGRATE		KVM_PSCI_FN(3)
+#define KVM_PSCI_FN_CPU_SUSPEND		PSCI_FN(KVM_PSCI_FN_BASE, 0)
+#define KVM_PSCI_FN_CPU_OFF		PSCI_FN(KVM_PSCI_FN_BASE, 1)
+#define KVM_PSCI_FN_CPU_ON		PSCI_FN(KVM_PSCI_FN_BASE, 2)
+#define KVM_PSCI_FN_MIGRATE		PSCI_FN(KVM_PSCI_FN_BASE, 3)
 
-#define KVM_PSCI_RET_SUCCESS		0
-#define KVM_PSCI_RET_NI			((unsigned long)-1)
-#define KVM_PSCI_RET_INVAL		((unsigned long)-2)
-#define KVM_PSCI_RET_DENIED		((unsigned long)-3)
+#define KVM_PSCI_RET_SUCCESS		PSCI_RET_SUCCESS
+#define KVM_PSCI_RET_NI			PSCI_RET_NOT_SUPPORTED
+#define KVM_PSCI_RET_INVAL		PSCI_RET_INVALID_PARAMS
+#define KVM_PSCI_RET_DENIED		PSCI_RET_DENIED
 
 #endif /* __ARM_KVM_H__ */
