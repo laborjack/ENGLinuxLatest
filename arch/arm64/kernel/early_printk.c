@@ -25,6 +25,9 @@
 
 #include <linux/amba/serial.h>
 #include <linux/serial_reg.h>
+#include <linux/virtio_ids.h>
+#include <linux/virtio_mmio.h>
+#include <linux/virtio_console.h>
 
 #include <asm/fixmap.h>
 
@@ -52,6 +55,37 @@ static void smh_printch(char ch)
 		     "mov  x0, #3\n"
 		     "hlt  0xf000\n"
 		     : : "r" (&ch) : "x0", "x1", "memory");
+}
+
+/*
+ * VIRTIO MMIO console single character Tx.
+ */
+static void virtio_console_printch(char ch)
+{
+	u32 tmp;
+	static u32 init_done;
+	static u32 can_write;
+	struct virtio_console_config *p = early_base + VIRTIO_MMIO_CONFIG;
+
+	if (!init_done) {
+		tmp = readl_relaxed(early_base + VIRTIO_MMIO_DEVICE_ID);
+		if (tmp != VIRTIO_ID_CONSOLE) {
+			init_done = 1;
+			return;
+		}
+
+		tmp = readl_relaxed(early_base + VIRTIO_MMIO_HOST_FEATURES);
+		if (!(tmp & (1 << VIRTIO_CONSOLE_F_EMERG_WRITE))) {
+			init_done = 1;
+			return;
+		}
+
+		init_done = 1;
+		can_write = 1;
+	}
+
+	if (can_write)
+		writeb_relaxed(ch, &p->emerg_wr);
 }
 
 /*
@@ -84,6 +118,7 @@ static const struct earlycon_match earlycon_match[] __initconst = {
 	{ .name = "smh", .printch = smh_printch, },
 	{ .name = "uart8250-8bit", .printch = uart8250_8bit_printch, },
 	{ .name = "uart8250-32bit", .printch = uart8250_32bit_printch, },
+	{ .name = "virtio-console", .printch = virtio_console_printch, },
 	{}
 };
 
