@@ -1,0 +1,66 @@
+APM X-Gene SoC Ethernet nodes
+
+Ethernet nodes are defined to describe on-chip ethernet interfaces in
+APM X-Gene SoC.
+
+Required properties:
+- compatible:		Should be "apm,xgene-enet"
+- reg:			First resource is the ethernet base register set
+			Second resource is the ring base register set
+			Third resource is the ring command register set
+- interrupts:		Ethernet main interrupt
+- clocks:		Reference to the clock entry.
+- local-mac-address:	Ethernet MAC address.
+- phy-connection-type:	Ethernet MII mode.
+
+- mdio device tree subnode: When the X-Gene SoC has a phy connected to its local
+		mdio, there must be device tree subnode with the following
+		required properties:
+
+	- compatible: Must be "apm,xgene-mdio".
+	- #address-cells: Must be <1>.
+	- #size-cells: Must be <0>.
+
+	For the phy on the mdio bus, there must be a node with the following
+	fields:
+
+	- reg: phy id used to communicate to phy.
+
+Optional properties:
+- status		: Should be "ok" or "disabled" for enabled/disabled.
+			  Default is "ok".
+
+Example:
+	menetclk: menetclk {
+		compatible = "apm,xgene-device-clock";
+		clock-output-names = "menetclk";
+		status = "ok";
+	};
+
+	menet: ethernet@17020000 {
+		compatible = "apm,xgene-enet";
+		status = "disabled";
+		reg = <0x0 0x17020000 0x0 0xd100>,
+		      <0x0 0X17030000 0x0 0X400>,
+		      <0x0 0X10000000 0x0 0X200>;
+		interrupts = <0x0 0x3c 0x4>;
+		clocks = <&menetclk 0>;
+		local-mac-address = [00 01 73 00 00 01];
+		phy-connection-type = "rgmii";
+		phy-handle = <&menetphy>;
+		mdio {
+			compatible = "apm,xgene-mdio";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			menetphy: menetphy@3 {
+				reg = <0x3>;
+			};
+
+		};
+	};
+
+/* Board-specific peripheral configurations */
+
+&menet {
+        status = "ok";
+};
