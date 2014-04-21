@@ -330,6 +330,22 @@
 				reg-names = "csr-reg";
 				clock-output-names = "pcie4clk";
 			};
+
+			i2cclk: i2cclk@17000000 {
+				compatible = "apm,xgene-device-clock";
+				#clock-cells = <1>;
+				clocks = <&socplldiv2 0>;
+				reg = <0x0 0x17000000 0x0 0x2000>;
+				reg-names = "csr-reg";
+				csr-offset = <0x0>;
+				csr-mask = <0x2>;
+				enable-offset = <0x10>;
+				enable-mask = <0x4>;
+				divider-offset = <0x168>;
+				divider-width = <0x5>;
+				divider-shift = <0x0>;
+				clock-output-names = "i2cclk";
+			};
 		};
 
 		reboot@17000014 {
@@ -460,6 +476,17 @@
 			interrupts = <0x0 0x46 0x4>;
 			#clock-cells = <1>;
 			clocks = <&rtcclk 0>;
+		};
+
+		i2c0: i2c@10512000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "snps,designware-i2c";
+			reg = <0x0 0x10512000 0x0 0x1000>;
+			interrupts = <0 0x44 0x4>;
+			#clock-cells = <1>;
+			clocks = <&i2cclk 0>;
+			bus_num = <0>;
 		};
 
 		pcie0: pcie@1f2b0000 {
