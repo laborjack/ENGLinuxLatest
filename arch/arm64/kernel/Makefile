@@ -20,6 +20,7 @@ arm64-obj-$(CONFIG_HW_PERF_EVENTS)	+= perf_event.o
 arm64-obj-$(CONFIG_HAVE_HW_BREAKPOINT)	+= hw_breakpoint.o
 arm64-obj-$(CONFIG_ARM64_CPU_SUSPEND)	+= sleep.o suspend.o
 arm64-obj-$(CONFIG_JUMP_LABEL)		+= jump_label.o
+arm64-obj-$(CONFIG_PCI)			+= pci.o
 arm64-obj-$(CONFIG_KGDB)		+= kgdb.o
 
 obj-y					+= $(arm64-obj-y) vdso/
