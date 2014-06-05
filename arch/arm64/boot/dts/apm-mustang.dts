@@ -25,6 +25,10 @@
 	};
 };
 
+&serial0 {
+	status = "ok";
+};
+
 &pcie0clk {
 	status = "ok";
 };
