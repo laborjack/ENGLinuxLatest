@@ -37,4 +37,7 @@
 	status = "ok";
 };
 
+&menet {
+	status = "ok";
+};
 
