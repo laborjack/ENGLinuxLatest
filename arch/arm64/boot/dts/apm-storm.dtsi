@@ -716,5 +716,26 @@
 				     <0x0 0x21 0x4>,
 				     <0x0 0x27 0x4>;
 		};
+
+		gpio0: gpio0@1701c00c {
+			compatible = "apm,xgene-gpio";
+			reg = <0x0 0x1701c00c 0x0 0x30>;
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
+
+		gpio1: gpio1@1701c018 {
+			compatible = "apm,xgene-gpio";
+			reg = <0x0 0x1701c018 0x0 0x30>;
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
+
+		gpio2: gpio2@1701c024 {
+			compatible = "apm,xgene-gpio";
+			reg = <0x0 0x1701c024 0x0 0x30>;
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
 	};
 };
