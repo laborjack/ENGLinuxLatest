@@ -21,6 +21,7 @@
 #include <asm/assembler.h>
 #include <asm/memory.h>
 #include <asm/asm-offsets.h>
+#include <asm/pmu.h>
 #include <asm/debug-monitors.h>
 #include <asm/fpsimdmacros.h>
 #include <asm/kvm.h>
@@ -776,7 +777,7 @@ __kvm_hyp_code_start:
 
 	mrs	x2, mdcr_el2
 	and	x2, x2, #MDCR_EL2_HPMN_MASK
-	orr	x2, x2, #(MDCR_EL2_TPM | MDCR_EL2_TPMCR)
+	orr	x2, x2, #MDCR_EL2_TPMCR
 	orr	x2, x2, #(MDCR_EL2_TDRA | MDCR_EL2_TDOSA)
 
 	// Check for KVM_ARM64_DEBUG_DIRTY, and set to debug to trap
