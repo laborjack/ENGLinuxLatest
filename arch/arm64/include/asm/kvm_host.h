@@ -38,6 +38,7 @@
 
 #include <kvm/arm_vgic.h>
 #include <kvm/arm_arch_timer.h>
+#include <kvm/arm_pmu.h>
 
 #define KVM_VCPU_MAX_FEATURES 3
 
@@ -63,6 +64,9 @@ struct kvm_arch {
 
 	/* Timer */
 	struct arch_timer_kvm	timer;
+
+	/* PMU */
+	struct pmu_kvm		pmu;
 };
 
 #define KVM_NR_MEM_OBJS     40
@@ -109,7 +113,12 @@ struct kvm_vcpu_arch {
 
 	/* VGIC state */
 	struct vgic_cpu vgic_cpu;
+
+	/* Timer state */
 	struct arch_timer_cpu timer_cpu;
+
+	/* PMU state */
+	struct pmu_cpu pmu_cpu;
 
 	/*
 	 * Anything that is not used directly from assembly code goes
