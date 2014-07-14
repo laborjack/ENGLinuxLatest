@@ -64,6 +64,7 @@
 #define GIC_CPU_INT_PRI_THRESHOLD	0xf0
 #define GIC_CPU_INT_SPURIOUS		1023
 #define GIC_CPU_INT_ID_MASK		0x3ff
+#define GIC_CPU_DIS_BYPASS_MASK		0x1e0
 
 union gic_base {
 	void __iomem *common_base;
@@ -394,6 +395,20 @@ static u8 gic_get_cpumask(struct gic_chip_data *gic)
 	return mask;
 }
 
+static void gic_cpu_if_up(void)
+{
+	void __iomem *cpu_base = gic_data_cpu_base(&gic_data[0]);
+	u32 bypass;
+
+	/*
+	 * Preserve bypass disable bits to be written back later
+	 */
+	bypass = readl(cpu_base + GIC_CPU_CTRL);
+	bypass &= GIC_CPU_DIS_BYPASS_MASK;
+
+	writel_relaxed(bypass | GIC_CPU_ENABLE, cpu_base + GIC_CPU_CTRL);
+}
+
 static void __init gic_dist_init(struct gic_chip_data *gic)
 {
 	unsigned int i;
@@ -476,13 +491,17 @@ static void gic_cpu_init(struct gic_chip_data *gic)
 				dist_base + GIC_DIST_PRI + i * 4 / 4);
 
 	writel_relaxed(GIC_CPU_INT_PRI_THRESHOLD, base + GIC_CPU_PRIMASK);
-	writel_relaxed(GIC_CPU_ENABLE, base + GIC_CPU_CTRL);
+	gic_cpu_if_up();
 }
 
 void gic_cpu_if_down(void)
 {
 	void __iomem *cpu_base = gic_data_cpu_base(&gic_data[0]);
-	writel_relaxed(0, cpu_base + GIC_CPU_CTRL);
+	u32 val;
+
+	val = readl(cpu_base + GIC_CPU_CTRL);
+	val &= ~GIC_CPU_ENABLE;
+	writel_relaxed(val, cpu_base + GIC_CPU_CTRL);
 }
 
 #ifdef CONFIG_CPU_PM
@@ -618,7 +637,7 @@ static void gic_cpu_restore(unsigned int gic_nr)
 					dist_base + GIC_DIST_PRI + i * 4);
 
 	writel_relaxed(GIC_CPU_INT_PRI_THRESHOLD, cpu_base + GIC_CPU_PRIMASK);
-	writel_relaxed(GIC_CPU_ENABLE, cpu_base + GIC_CPU_CTRL);
+	gic_cpu_if_up();
 }
 
 static int gic_notifier(struct notifier_block *self, unsigned long cmd,	void *v)
