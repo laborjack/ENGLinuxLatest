@@ -717,5 +717,12 @@
 				     <0x0 0x21 0x4>,
 				     <0x0 0x27 0x4>;
 		};
+
+		gpio: gpio0@1701c000 {
+			compatible = "apm,xgene-gpio";
+			reg = <0x0 0x1701c000 0x0 0x40>;
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
 	};
 };
