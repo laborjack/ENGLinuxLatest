@@ -8,13 +8,21 @@ Device Tree Bindings for the Arasan SDHCI Controller
   [3] Documentation/devicetree/bindings/interrupt-controller/interrupts.txt
 
 Required Properties:
-  - compatible: Compatibility string. Must be 'arasan,sdhci-8.9a'
-  - reg: From mmc bindings: Register location and length.
-  - clocks: From clock bindings: Handles to clock inputs.
-  - clock-names: From clock bindings: Tuple including "clk_xin" and "clk_ahb"
+  - compatible: Compatibility string. Must be 'arasan,sdhci-8.9a' or
+                'apm,arasan,sdhci-8.9a'
+  - reg: First resource is the SDHC register location and length.
+         Second optional resource is the bridge translation register location
+         and length if required.
   - interrupts: Interrupt specifier
   - interrupt-parent: Phandle for the interrupt controller that services
 		      interrupts for this device.
+
+Optional Properties:
+  - clocks: For format, refer to clock bindings. It requires two clocks if
+            specified - AHB clock and SDHC clock.
+  - clock-names: For format, refer to clock bindings. The clock corresponding
+                 to the AHBC clock must be named "clk_ahb". The clock
+                 corresponding to the SDHC clock must be named "clk_xin".
 
 Example:
 	sdhci@e0100000 {
