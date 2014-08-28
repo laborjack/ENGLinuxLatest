@@ -1,0 +1,41 @@
+The APM X-Gene SLIMpro mailbox driver is used to communicate messages between
+the ARM64 processors and the Cortex M3 (dubbed SLIMpro). It uses a simple
+interrupt based door bell mechanism and can exchange simple messages using the
+internal registers.
+
+There are total of 8 interrupts in this mailbox. Each used for an individual
+door bell (or mailbox channel).
+
+Required properties:
+- compatible:	Should be as "apm, xgene-slimpro-mbox".
+
+- reg:		Contain the mailbox register address range.
+
+- interrupts:	Contain interrupt information for the mailbox device.
+
+- #mbox-cells:	Specify the number of parameters used by the mailbox client.
+		Currently only one to specify the mailbox channel number.
+
+Example:
+
+Mailbox Node:
+		mailbox: slimpro-mailbox@10540000 {
+			compatible = "apm,xgene-slimpro-mbox";
+			reg = <0x0 0x10540000 0x0 0xa000>;
+			#mbox-cells = <1>;
+			interrupts =  	<0x0 0x0 0x4>,
+					<0x0 0x1 0x4>,
+					<0x0 0x2 0x4>,
+					<0x0 0x3 0x4>,
+					<0x0 0x4 0x4>,
+					<0x0 0x5 0x4>,
+					<0x0 0x6 0x4>,
+					<0x0 0x7 0x4>;
+		};
+
+Client Node:
+		i2cslimpro {
+			compatible = "apm,xgene-slimpro-i2c";
+			mbox = <&mailbox 0>;
+			mbox-names = "i2c-slimpro";
+		};
