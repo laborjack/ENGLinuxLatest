@@ -718,5 +718,12 @@
 					 0x0 0x0 0x0 0x4 &gic 0x0 0xdd 0x1>;
 			clocks = <&pcie4clk 0>;
 		};
+
+		gfcgpio: gpio0@1701c000 {
+			compatible = "apm,xgene-gpio";
+			reg = <0x0 0x1701c000 0x0 0x40>;
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
 	};
 };
