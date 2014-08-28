@@ -294,6 +294,33 @@ int phy_power_off(struct phy *phy)
 EXPORT_SYMBOL_GPL(phy_power_off);
 
 /**
+ * phy_set_rate - set an specified lane at an specified rate
+ * @phy: phy instance to be set
+ * @lane: zero-based lane index
+ * @rate: operating rate in bps (bits per second)
+ *
+ * Returns 0 if successful, -ENOTSUPP if not supported
+ * -EINVAL if parameter out of range.
+ */
+int phy_set_rate(struct phy *phy, int lane, u64 rate)
+{
+	int ret = 0;
+
+	mutex_lock(&phy->mutex);
+ 	if (phy->ops->set_rate) {
+		ret = phy->ops->set_rate(phy, lane, rate);
+		if (ret < 0) {
+			dev_err(&phy->dev, "phy set rate failed --> %d\n",
+				ret);
+		}
+	}
+	mutex_unlock(&phy->mutex);
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(phy_set_rate);
+
+/**
  * _of_phy_get() - lookup and obtain a reference to a phy by phandle
  * @np: device_node for which to get the phy
  * @index: the index of the phy
