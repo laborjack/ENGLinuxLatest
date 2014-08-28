@@ -28,6 +28,7 @@ struct phy;
  * @exit: operation to be performed while exiting
  * @power_on: powering on the phy
  * @power_off: powering off the phy
+ * @set_rate: set the rate
  * @owner: the module owner containing the ops
  */
 struct phy_ops {
@@ -35,6 +36,7 @@ struct phy_ops {
 	int	(*exit)(struct phy *phy);
 	int	(*power_on)(struct phy *phy);
 	int	(*power_off)(struct phy *phy);
+	int     (*set_rate)(struct phy *phy, int lane, u64 rate);
 	struct module *owner;
 };
 
@@ -139,6 +141,7 @@ int phy_init(struct phy *phy);
 int phy_exit(struct phy *phy);
 int phy_power_on(struct phy *phy);
 int phy_power_off(struct phy *phy);
+int phy_set_rate(struct phy *phy, int lane, u64 rate);
 static inline int phy_get_bus_width(struct phy *phy)
 {
 	return phy->attrs.bus_width;
@@ -238,6 +241,11 @@ static inline int phy_power_off(struct phy *phy)
 {
 	if (!phy)
 		return 0;
+	return -ENOSYS;
+}
+
+static inline int phy_set_rate(struct phy *phy, int lane, u64 rate)
+{
 	return -ENOSYS;
 }
 
