@@ -541,6 +541,7 @@ static const DECLARE_TLV_DB_SCALE(dac_vol_tlv, -65625, 375, 0);
 static const DECLARE_TLV_DB_SCALE(in_vol_tlv, -3450, 150, 0);
 static const DECLARE_TLV_DB_SCALE(adc_vol_tlv, -17625, 375, 0);
 static const DECLARE_TLV_DB_SCALE(adc_bst_tlv, 0, 1200, 0);
+static const DECLARE_TLV_DB_SCALE(st_vol_tlv, -4650, 150, 0);
 
 /* {0, +20, +24, +30, +35, +40, +44, +50, +52} dB */
 static unsigned int bst_tlv[] = {
@@ -604,6 +605,10 @@ static const struct snd_kcontrol_new rt5677_snd_controls[] = {
 	SOC_DOUBLE_TLV("Mono ADC Capture Volume", RT5677_MONO_ADC_DIG_VOL,
 		RT5677_MONO_ADC_L_VOL_SFT, RT5677_MONO_ADC_R_VOL_SFT, 127, 0,
 		adc_vol_tlv),
+
+	/* Sidetone Control */
+	SOC_SINGLE_TLV("Sidetone Volume", RT5677_SIDETONE_CTRL,
+		RT5677_ST_VOL_SFT, 31, 0, st_vol_tlv),
 
 	/* ADC Boost Volume Control */
 	SOC_DOUBLE_TLV("STO1 ADC Boost Volume", RT5677_STO1_2_ADC_BST,
@@ -1993,6 +1998,9 @@ static const struct snd_soc_dapm_widget rt5677_dapm_widgets[] = {
 	/* Sidetone Mux */
 	SND_SOC_DAPM_MUX("Sidetone Mux", SND_SOC_NOPM, 0, 0,
 			&rt5677_sidetone_mux),
+	SND_SOC_DAPM_SUPPLY("Sidetone Power", RT5677_SIDETONE_CTRL,
+		RT5677_ST_EN_SFT, 0, NULL, 0),
+
 	/* VAD Mux*/
 	SND_SOC_DAPM_MUX("VAD ADC Mux", SND_SOC_NOPM, 0, 0,
 			&rt5677_vad_src_mux),
@@ -2704,6 +2712,7 @@ static const struct snd_soc_dapm_route rt5677_dapm_routes[] = {
 	{ "Sidetone Mux", "DMIC4 L", "DMIC L4" },
 	{ "Sidetone Mux", "ADC1", "ADC 1" },
 	{ "Sidetone Mux", "ADC2", "ADC 2" },
+	{ "Sidetone Mux", NULL, "Sidetone Power" },
 
 	{ "Stereo DAC MIXL", "ST L Switch", "Sidetone Mux" },
 	{ "Stereo DAC MIXL", "DAC1 L Switch", "DAC1 MIXL" },
@@ -3107,6 +3116,59 @@ static int rt5677_set_dai_pll(struct snd_soc_dai *dai, int pll_id, int source,
 	return 0;
 }
 
+static int rt5677_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
+			unsigned int rx_mask, int slots, int slot_width)
+{
+	struct snd_soc_codec *codec = dai->codec;
+	unsigned int val = 0;
+
+	if (rx_mask || tx_mask)
+		val |= (1 << 12);
+
+	switch (slots) {
+	case 4:
+		val |= (1 << 10);
+		break;
+	case 6:
+		val |= (2 << 10);
+		break;
+	case 8:
+		val |= (3 << 10);
+		break;
+	case 2:
+	default:
+		break;
+	}
+
+	switch (slot_width) {
+	case 20:
+		val |= (1 << 8);
+		break;
+	case 24:
+		val |= (2 << 8);
+		break;
+	case 32:
+		val |= (3 << 8);
+		break;
+	case 16:
+	default:
+		break;
+	}
+
+	switch (dai->id) {
+	case RT5677_AIF1:
+		snd_soc_update_bits(codec, RT5677_TDM1_CTRL1, 0x1f00, val);
+		break;
+	case RT5677_AIF2:
+		snd_soc_update_bits(codec, RT5677_TDM2_CTRL1, 0x1f00, val);
+		break;
+	default:
+		break;
+	}
+
+	return 0;
+}
+
 static int rt5677_set_bias_level(struct snd_soc_codec *codec,
 			enum snd_soc_bias_level level)
 {
@@ -3354,6 +3416,7 @@ static struct snd_soc_dai_ops rt5677_aif_dai_ops = {
 	.set_fmt = rt5677_set_dai_fmt,
 	.set_sysclk = rt5677_set_dai_sysclk,
 	.set_pll = rt5677_set_dai_pll,
+	.set_tdm_slot = rt5677_set_tdm_slot,
 };
 
 static struct snd_soc_dai_driver rt5677_dai[] = {
