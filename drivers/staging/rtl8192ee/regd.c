@@ -291,7 +291,6 @@ static void _rtl_reg_apply_world_flags(struct wiphy *wiphy,
 {
 	_rtl_reg_apply_beaconing_flags(wiphy, initiator);
 	_rtl_reg_apply_active_scan_flags(wiphy, initiator);
-	return;
 }
 
 static void _rtl_dump_channel_map(struct wiphy *wiphy)
@@ -360,11 +359,11 @@ static const struct ieee80211_regdomain *_rtl_regdomain_select(
 	}
 }
 
-static int _rtl92e_regd_init_wiphy(struct rtl_regulatory *reg,
-				   struct wiphy *wiphy,
-				   void (*reg_notifier)(struct wiphy *wiphy,
-						        struct regulatory_request *
-						        request))
+static int
+_rtl92e_regd_init_wiphy(struct rtl_regulatory *reg,
+			struct wiphy *wiphy,
+			void (*reg_notifier)(struct wiphy *wiphy,
+					     struct regulatory_request *req))
 {
 	const struct ieee80211_regdomain *regd;
 
@@ -407,12 +406,12 @@ int rtl92e_regd_init(struct ieee80211_hw *hw,
 	rtlpriv->regd.country_code = rtlpriv->efuse.channel_plan;
 
 	RT_TRACE(COMP_REGD, DBG_TRACE,
-		 (KERN_DEBUG "rtl: EEPROM regdomain: 0x%0x\n",
-		  rtlpriv->regd.country_code));
+		 KERN_DEBUG "rtl: EEPROM regdomain: 0x%0x\n",
+		  rtlpriv->regd.country_code);
 
 	if (rtlpriv->regd.country_code >= COUNTRY_CODE_MAX) {
 		RT_TRACE(COMP_REGD, DBG_DMESG,
-			 ("rtl: EEPROM indicates invalid contry code world wide 13 should be used\n"));
+			 "rtl: EEPROM indicates invalid contry code world wide 13 should be used\n");
 
 		rtlpriv->regd.country_code = COUNTRY_CODE_WORLD_WIDE_13;
 	}
@@ -428,8 +427,8 @@ int rtl92e_regd_init(struct ieee80211_hw *hw,
 	}
 
 	RT_TRACE(COMP_REGD, DBG_TRACE,
-		 (KERN_DEBUG "rtl: Country alpha2 being used: %c%c\n",
-		  rtlpriv->regd.alpha2[0], rtlpriv->regd.alpha2[1]));
+		 KERN_DEBUG "rtl: Country alpha2 being used: %c%c\n",
+		  rtlpriv->regd.alpha2[0], rtlpriv->regd.alpha2[1]);
 
 	_rtl92e_regd_init_wiphy(&rtlpriv->regd, wiphy, reg_notifier);
 
@@ -442,7 +441,7 @@ void rtl92e_reg_notifier(struct wiphy *wiphy,
 	struct ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
 	struct rtl_priv *rtlpriv = rtl_priv(hw);
 
-	RT_TRACE(COMP_REGD, DBG_LOUD, ("\n"));
+	RT_TRACE(COMP_REGD, DBG_LOUD, "\n");
 
 	_rtl92e_reg_notifier_apply(wiphy, request, &rtlpriv->regd);
 }
