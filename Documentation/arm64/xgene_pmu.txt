@@ -1,0 +1,115 @@
+CPU PMU Event list
+
+     This section lists all the supported CPU events and corresponding
+     event-ids.
+
+     -------------------------------------------------------------------------
+     Event-id   Description
+     -------------------------------------------------------------------------
+     0x000      Instruction architecturally executed, condition code check
+                pass, software increment
+     0x001      L1 Instruction cache refill
+     0x002      L1 instruction TLB refill
+     0x003      L1 data cache refill
+     0x004      L1 data cache access
+     0x005      L1 data TLB refill
+     0x008      Instruction architecturally executed
+     0x009      Exception taken
+     0x00A      Instruction architecturally executed (condition check pass)
+                -Exception return
+     0x00B      Instruction architecturally executed (condition check pass) -
+                Write to CONTEXTIDR
+     0x010      Mispredicted or not predicted branch speculatively executed
+     0x011      Cycle
+     0x012      Predictable branch speculatively executed
+     0x013      Data memory access
+     0x014      L1 instruction cache access
+     0x016      L2 data cache access
+     0x017      L2 data cache refill
+     0x018      L2 data cache write-back
+     0x019      Bus access
+     0x01A      Local Memory Error
+     0x01B      Operation speculatively executed
+     0x01C      Instruction architecturally executed (condition check pass) -
+                Write to translation table base
+     0x01E      Counter chain
+     0x040      L1 data cache access - Read
+     0x041      L1 data cache access - Write
+     0x042      L1 data cache refill - Read
+     0x048      L1 data cache invalidate
+     0x04C      L1 data TLB refill - Read
+     0x04D      L1 data TLB refill - Write
+     0x050      L2 data cache access - Read
+     0x051      L2 data cache access - Write
+     0x052      L2 data cache refill - Read
+     0x053      L2 data cache refill - Write
+     0x056      L2 data cache write-back - victim
+     0x057      L2 data cache write-back - Cleaning and coherency
+     0x058      L2 data cache invalidate
+     0x060      Bus access - Read
+     0x061      Bus access - Write
+     0x062      Bus access - Normal, cacheable, sharable
+     0x063      Bus access - Not normal, cacheable, sharable
+     0x064      Bus access - Normal
+     0x065      Bus access - Peripheral
+     0x066      Data memory access - Read
+     0x067      Data memory access - write
+     0x068      Unaligned access - Read
+     0x069      Unaligned access - Write
+     0x06A      Unaligned access
+     0x06C      Exclusive operation speculatively executed - Load exclusive
+     0x06D      Exclusive operation speculative executed - Store exclusive pass
+     0x06E      Exclusive operation speculative executed - Store exclusive fail
+     0x06F      Exclusive operation speculatively executed - Store exclusive
+     0x070      Operation speculatively executed - Load
+     0x071      Operation speculatively executed - Store
+     0x072      Operation speculatively executed - Load or store
+     0x073      Operation speculatively executed - Integer data processing
+     0x074      Operation speculatively executed - Advanced SIMD
+     0x075      Operation speculatively executed - FP
+     0x076      Operation speculatively executed - Software change of PC
+     0x078      Branch speculative executed - Immediate branch
+     0x079      Branch speculative executed - Procedure return
+     0x07A      Branch speculative executed - Indirect branch
+     0x07C      Barrier speculatively executed - ISB
+     0x07D      Barrier speculatively executed - DSB
+     0x07E      Barrier speculatively executed - DMB
+     0x081      Exception taken, other synchronous
+     0x082      Exception taken, Supervisor Call
+     0x083      Exception taken, Instruction Abort
+     0x084      Exception taken, Data Abort or SError
+     0x086      Exception taken, IRQ
+     0x087      Exception taken, FIQ
+     0x08A      Exception taken, Hypervisor Call
+     0x08B      Exception taken, Instruction Abort not taken locally
+     0x08C      Exception taken, Data Abort or SError not taken locally
+     0x08D      Exception taken, other traps not taken locally
+     0x08E      Exception taken, IRQ not taken locally
+     0x08F      Exception taken, FIQ not taken locally
+     0x090      Release consistency instruction speculatively executed -
+                Load Acquire
+     0x091      Release consistency instruction speculatively executed -
+                Store Release
+     0x100      Operation speculatively executed - NOP
+     0x101      FSU clocking gated off cycle
+     0x102      BTB misprediction
+     0x103      ITB miss
+     0x104      DTB miss
+     0x105      L1 data cache late miss
+     0x106      L1 data cache prefetch request
+     0x107      L2 data prefetch request
+     0x108      Decode starved for instruction cycle
+     0x109      Op dispatch stalled cycle
+     0x10A      IXA Op non-issue
+     0x10B      IXB Op non-issue
+     0x10C      BX Op non-issue
+     0x10D      LX Op non-issue
+     0x10E      SX Op non-issue
+     0x10F      FX Op non-issue
+     0x110      Wait state cycle
+     0x111      L1 stage-2 TLB refill
+     0x112      Page Walk Cache level-0 stage-1 hit
+     0x113      Page Walk Cache level-1 stage-1 hit
+     0x114      Page Walk Cache level-2 stage-1 hit
+     0x115      Page Walk Cache level-1 stage-2 hit
+     0x116      Page Walk Cache level-2 stage-2 hit
