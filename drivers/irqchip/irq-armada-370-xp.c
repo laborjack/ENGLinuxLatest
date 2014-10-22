@@ -73,6 +73,16 @@ static DEFINE_MUTEX(msi_used_lock);
 static phys_addr_t msi_doorbell_addr;
 #endif
 
+static inline bool is_percpu_irq(irq_hw_number_t irq)
+{
+	switch (irq) {
+	case ARMADA_370_XP_TIMER0_PER_CPU_IRQ:
+		return true;
+	default:
+		return false;
+	}
+}
+
 static void armada_370_xp_irq_mask(struct irq_data *d)
 {
 	irq_hw_number_t hwirq = irqd_to_hwirq(d);
@@ -271,7 +281,7 @@ static int armada_370_xp_mpic_irq_map(struct irq_domain *h,
 
 	irq_set_status_flags(virq, IRQ_LEVEL);
 
-	if (hw == ARMADA_370_XP_TIMER0_PER_CPU_IRQ) {
+	if (is_percpu_irq(hw)) {
 		irq_set_percpu_devid(virq);
 		irq_set_chip_and_handler(virq, &armada_370_xp_irq_chip,
 					handle_percpu_devid_irq);
