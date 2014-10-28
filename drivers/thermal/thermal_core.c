@@ -1581,6 +1581,7 @@ struct thermal_zone_device *thermal_zone_device_register(const char *type,
 unregister:
 	release_idr(&thermal_tz_idr, &thermal_idr_lock, tz->id);
 	device_unregister(&tz->device);
+	kfree(tz);
 	return ERR_PTR(result);
 }
 EXPORT_SYMBOL_GPL(thermal_zone_device_register);
