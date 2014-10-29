@@ -10,10 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
  */
 
 #include <linux/slab.h>
@@ -21,7 +17,7 @@
 #include <linux/module.h>
 #include <linux/device.h>
 
-#include <net/wpan-phy.h>
+#include <net/cfg802154.h>
 
 #include "ieee802154.h"
 
@@ -37,7 +33,7 @@ static ssize_t name ## _show(struct device *dev,			\
 	mutex_unlock(&phy->pib_lock);					\
 	return ret;							\
 }									\
-static DEVICE_ATTR_RO(name);
+static DEVICE_ATTR_RO(name)
 
 #define MASTER_SHOW(field, format_string)				\
 	MASTER_SHOW_COMPLEX(field, format_string, phy->field)
