@@ -157,7 +157,7 @@ struct generic_bl_info {
 	void (*kick_battery)(void);
 };
 
-#ifdef CONFIG_OF
+#if defined(CONFIG_OF) && defined(CONFIG_BACKLIGHT_CLASS_DEVICE)
 struct backlight_device *of_find_backlight_by_node(struct device_node *node);
 #else
 static inline struct backlight_device *
