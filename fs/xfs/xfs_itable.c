@@ -476,7 +476,7 @@ xfs_bulkstat(
 			error = xfs_btree_increment(cur, 0, &tmp);
 			if (error) {
 				end_of_ag = 1;
-				break;
+				goto del_cursor;
 			}
 			cond_resched();
 		}
