@@ -7189,6 +7189,7 @@ F:	drivers/crypto/picoxcell*
 
 PIN CONTROL SUBSYSTEM
 M:	Linus Walleij <linus.walleij@linaro.org>
+L:	linux-gpio@vger.kernel.org
 S:	Maintained
 F:	drivers/pinctrl/
 F:	include/linux/pinctrl/
@@ -7197,7 +7198,7 @@ PIN CONTROLLER - ATMEL AT91
 M:	Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>
 L:	linux-arm-kernel@lists.infradead.org (moderated for non-subscribers)
 S:	Maintained
-F:	drivers/pinctrl/pinctrl-at91.c
+F:	drivers/pinctrl/pinctrl-at91.*
 
 PIN CONTROLLER - RENESAS
 M:	Laurent Pinchart <laurent.pinchart@ideasonboard.com>
