@@ -1186,7 +1186,6 @@ extern int blk_verify_command(unsigned char *cmd, fmode_t has_write_perm);
 enum blk_default_limits {
 	BLK_MAX_SEGMENTS	= 128,
 	BLK_SAFE_MAX_SECTORS	= 255,
-	BLK_DEF_MAX_SECTORS	= 1024,
 	BLK_MAX_SEGMENT_SIZE	= 65536,
 	BLK_SEG_BOUNDARY_MASK	= 0xFFFFFFFFUL,
 };
@@ -1583,13 +1582,13 @@ static inline bool blk_integrity_merge_rq(struct request_queue *rq,
 					  struct request *r1,
 					  struct request *r2)
 {
-	return 0;
+	return true;
 }
 static inline bool blk_integrity_merge_bio(struct request_queue *rq,
 					   struct request *r,
 					   struct bio *b)
 {
-	return 0;
+	return true;
 }
 static inline bool blk_integrity_is_initialized(struct gendisk *g)
 {
