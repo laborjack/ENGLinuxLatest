@@ -1281,8 +1281,7 @@ i915_wait_seqno(struct intel_engine_cs *ring, uint32_t seqno)
 }
 
 static int
-i915_gem_object_wait_rendering__tail(struct drm_i915_gem_object *obj,
-				     struct intel_engine_cs *ring)
+i915_gem_object_wait_rendering__tail(struct drm_i915_gem_object *obj)
 {
 	if (!obj->active)
 		return 0;
@@ -1319,7 +1318,7 @@ i915_gem_object_wait_rendering(struct drm_i915_gem_object *obj,
 	if (ret)
 		return ret;
 
-	return i915_gem_object_wait_rendering__tail(obj, ring);
+	return i915_gem_object_wait_rendering__tail(obj);
 }
 
 /* A nonblocking variant of the above wait. This is a highly dangerous routine
@@ -1359,7 +1358,7 @@ i915_gem_object_wait_rendering__nonblocking(struct drm_i915_gem_object *obj,
 	if (ret)
 		return ret;
 
-	return i915_gem_object_wait_rendering__tail(obj, ring);
+	return i915_gem_object_wait_rendering__tail(obj);
 }
 
 /**
@@ -3701,7 +3700,7 @@ int i915_gem_object_set_cache_level(struct drm_i915_gem_object *obj,
 		list_for_each_entry(vma, &obj->vma_list, vma_link)
 			if (drm_mm_node_allocated(&vma->node))
 				vma->bind_vma(vma, cache_level,
-					      obj->has_global_gtt_mapping ? GLOBAL_BIND : 0);
+						vma->bound & GLOBAL_BIND);
 	}
 
 	list_for_each_entry(vma, &obj->vma_list, vma_link)
@@ -4097,7 +4096,7 @@ i915_gem_object_pin(struct drm_i915_gem_object *obj,
 			return PTR_ERR(vma);
 	}
 
-	if (flags & PIN_GLOBAL && !obj->has_global_gtt_mapping)
+	if (flags & PIN_GLOBAL && !(vma->bound & GLOBAL_BIND))
 		vma->bind_vma(vma, obj->cache_level, GLOBAL_BIND);
 
 	vma->pin_count++;
