@@ -37,6 +37,8 @@
 /* Interrupt Controller Registers Map */
 #define ARMADA_370_XP_INT_SET_MASK_OFFS		(0x48)
 #define ARMADA_370_XP_INT_CLEAR_MASK_OFFS	(0x4C)
+#define ARMADA_370_XP_INT_FABRIC_MASK_OFFS	(0x54)
+#define ARMADA_370_XP_INT_CAUSE_PERF(cpu)	(1 << cpu)
 
 #define ARMADA_370_XP_INT_CONTROL		(0x00)
 #define ARMADA_370_XP_INT_SET_ENABLE_OFFS	(0x30)
@@ -55,6 +57,7 @@
 #define ARMADA_370_XP_MAX_PER_CPU_IRQS		(28)
 
 #define ARMADA_370_XP_TIMER0_PER_CPU_IRQ	(5)
+#define ARMADA_370_XP_FABRIC_IRQ		(3)
 
 #define IPI_DOORBELL_START                      (0)
 #define IPI_DOORBELL_END                        (8)
@@ -74,33 +77,29 @@ static DEFINE_MUTEX(msi_used_lock);
 static phys_addr_t msi_doorbell_addr;
 #endif
 
-/*
- * In SMP mode:
- * For shared global interrupts, mask/unmask global enable bit
- * For CPU interrupts, mask/unmask the calling CPU's bit
- */
+static inline bool is_percpu_irq(irq_hw_number_t irq)
+{
+	switch (irq) {
+	case ARMADA_370_XP_TIMER0_PER_CPU_IRQ:
+	case ARMADA_370_XP_FABRIC_IRQ:
+		return true;
+	default:
+		return false;
+	}
+}
+
 static void armada_370_xp_irq_mask(struct irq_data *d)
 {
 	irq_hw_number_t hwirq = irqd_to_hwirq(d);
 
-	if (hwirq != ARMADA_370_XP_TIMER0_PER_CPU_IRQ)
-		writel(hwirq, main_int_base +
-				ARMADA_370_XP_INT_CLEAR_ENABLE_OFFS);
-	else
-		writel(hwirq, per_cpu_int_base +
-				ARMADA_370_XP_INT_SET_MASK_OFFS);
+	writel(hwirq, per_cpu_int_base + ARMADA_370_XP_INT_SET_MASK_OFFS);
 }
 
 static void armada_370_xp_irq_unmask(struct irq_data *d)
 {
 	irq_hw_number_t hwirq = irqd_to_hwirq(d);
 
-	if (hwirq != ARMADA_370_XP_TIMER0_PER_CPU_IRQ)
-		writel(hwirq, main_int_base +
-				ARMADA_370_XP_INT_SET_ENABLE_OFFS);
-	else
-		writel(hwirq, per_cpu_int_base +
-				ARMADA_370_XP_INT_CLEAR_MASK_OFFS);
+	writel(hwirq, per_cpu_int_base + ARMADA_370_XP_INT_CLEAR_MASK_OFFS);
 }
 
 #ifdef CONFIG_PCI_MSI
@@ -283,15 +282,11 @@ static struct irq_chip armada_370_xp_irq_chip = {
 static int armada_370_xp_mpic_irq_map(struct irq_domain *h,
 				      unsigned int virq, irq_hw_number_t hw)
 {
-	armada_370_xp_irq_mask(irq_get_irq_data(virq));
-	if (hw != ARMADA_370_XP_TIMER0_PER_CPU_IRQ)
-		writel(hw, per_cpu_int_base +
-			ARMADA_370_XP_INT_CLEAR_MASK_OFFS);
-	else
-		writel(hw, main_int_base + ARMADA_370_XP_INT_SET_ENABLE_OFFS);
+	writel(hw, main_int_base + ARMADA_370_XP_INT_SET_ENABLE_OFFS);
+
 	irq_set_status_flags(virq, IRQ_LEVEL);
 
-	if (hw == ARMADA_370_XP_TIMER0_PER_CPU_IRQ) {
+	if (is_percpu_irq(hw)) {
 		irq_set_percpu_devid(virq);
 		irq_set_chip_and_handler(virq, &armada_370_xp_irq_chip,
 					handle_percpu_devid_irq);
@@ -303,6 +298,33 @@ static int armada_370_xp_mpic_irq_map(struct irq_domain *h,
 	set_irq_flags(virq, IRQF_VALID | IRQF_PROBE);
 
 	return 0;
+}
+
+static void armada_xp_mpic_smp_cpu_init(void)
+{
+	unsigned long cpuid = cpu_logical_map(smp_processor_id());
+	u32 control;
+	int nr_irqs, i;
+
+	control = readl(main_int_base + ARMADA_370_XP_INT_CONTROL);
+	nr_irqs = (control >> 2) & 0x3ff;
+
+	/* Enable Performance Counter Overflow interrupts */
+	writel(ARMADA_370_XP_INT_CAUSE_PERF(cpuid),
+	       per_cpu_int_base + ARMADA_370_XP_INT_FABRIC_MASK_OFFS);
+
+	for (i = 0; i < nr_irqs; i++)
+		writel(i, per_cpu_int_base + ARMADA_370_XP_INT_SET_MASK_OFFS);
+
+	/* Clear pending IPIs */
+	writel(0, per_cpu_int_base + ARMADA_370_XP_IN_DRBEL_CAUSE_OFFS);
+
+	/* Enable first 8 IPIs */
+	writel(IPI_DOORBELL_MASK, per_cpu_int_base +
+		ARMADA_370_XP_IN_DRBEL_MSK_OFFS);
+
+	/* Unmask IPI interrupt */
+	writel(0, per_cpu_int_base + ARMADA_370_XP_INT_CLEAR_MASK_OFFS);
 }
 
 #ifdef CONFIG_SMP
@@ -325,28 +347,6 @@ static void armada_mpic_send_doorbell(const struct cpumask *mask,
 	/* submit softirq */
 	writel((map << 8) | irq, main_int_base +
 		ARMADA_370_XP_SW_TRIG_INT_OFFS);
-}
-
-static void armada_xp_mpic_smp_cpu_init(void)
-{
-	u32 control;
-	int nr_irqs, i;
-
-	control = readl(main_int_base + ARMADA_370_XP_INT_CONTROL);
-	nr_irqs = (control >> 2) & 0x3ff;
-
-	for (i = 0; i < nr_irqs; i++)
-		writel(i, per_cpu_int_base + ARMADA_370_XP_INT_SET_MASK_OFFS);
-
-	/* Clear pending IPIs */
-	writel(0, per_cpu_int_base + ARMADA_370_XP_IN_DRBEL_CAUSE_OFFS);
-
-	/* Enable first 8 IPIs */
-	writel(IPI_DOORBELL_MASK, per_cpu_int_base +
-		ARMADA_370_XP_IN_DRBEL_MSK_OFFS);
-
-	/* Unmask IPI interrupt */
-	writel(0, per_cpu_int_base + ARMADA_370_XP_INT_CLEAR_MASK_OFFS);
 }
 
 static int armada_xp_mpic_secondary_init(struct notifier_block *nfb,
@@ -522,9 +522,8 @@ static int __init armada_370_xp_mpic_of_init(struct device_node *node,
 
 	BUG_ON(!armada_370_xp_mpic_domain);
 
-#ifdef CONFIG_SMP
+	/* Setup for the boot CPU */
 	armada_xp_mpic_smp_cpu_init();
-#endif
 
 	armada_370_xp_msi_init(node, main_int_res.start);
 
