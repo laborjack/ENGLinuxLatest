@@ -54,6 +54,10 @@ dtb-$(CONFIG_ARCH_AT91)	+= at91-sama5d4ek.dtb
 dtb-$(CONFIG_ARCH_ATLAS6) += atlas6-evb.dtb
 dtb-$(CONFIG_ARCH_AXXIA) += axm5516-amarillo.dtb
 dtb-$(CONFIG_ARCH_BCM2835) += bcm2835-rpi-b.dtb
+dtb-$(CONFIG_ARCH_BCM_CYGNUS) += \
+	bcm911360_entphn.dtb \
+	bcm911360k.dtb \
+	bcm958300k.dtb
 dtb-$(CONFIG_ARCH_BCM_5301X) += bcm4708-netgear-r6250.dtb
 dtb-$(CONFIG_ARCH_BCM_63XX) += bcm963138dvt.dtb
 dtb-$(CONFIG_ARCH_BCM_MOBILE) += bcm28155-ap.dtb \
@@ -275,7 +279,8 @@ dtb-$(CONFIG_ARCH_MXS) += imx23-evk.dtb \
 	imx28-m28evk.dtb \
 	imx28-sps1.dtb \
 	imx28-tx28.dtb
-dtb-$(CONFIG_ARCH_NOMADIK) += ste-nomadik-s8815.dtb
+dtb-$(CONFIG_ARCH_NOMADIK) += ste-nomadik-s8815.dtb \
+	ste-nomadik-nhk15.dtb
 dtb-$(CONFIG_ARCH_NSPIRE) += nspire-cx.dtb \
 	nspire-tp.dtb \
 	nspire-clp.dtb
