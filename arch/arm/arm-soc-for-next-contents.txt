@@ -13,6 +13,8 @@ next/cleanup
 		git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-soc-cleanups-for-v3.19
 	renesas/cleanup
 		git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-cleanup-for-v3.19
+	at91/cleanup
+		git://git.kernel.org/pub/scm/linux/kernel/git/nferre/linux-at91 tags/at91-cleanup
 
 next/soc
 	rk/cpufreq
@@ -21,6 +23,12 @@ next/soc
 		http://github.com/brcm/linux tags/brcmstb-smp-uart-for-3.19
 	integrator/multiplatform
 		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-integrator tags/integrator-multiplatform-for-arm-soc
+	samsung/pm2
+		http://git.kernel.org/pub/scm/linux/kernel/git/kgene/linux-samsung v3.19-next/pm-samsung-2
+	berlin/soc
+		git://git.infradead.org/users/hesselba/linux-berlin tags/berlin-soc-3.19-1
+	ux500/core
+		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-stericsson tags/ux500-core-for-arm-soc
 
 next/boards
 
@@ -37,10 +45,30 @@ next/dt
 		git://git.kernel.org/pub/scm/linux/kernel/git/mmind/linux-rockchip tags/v3.19-rockchip-dts1
 	renesas/dt-clocksource
 		git://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-dt-clocksource-for-v3.19
+	bcm/cygnus-dt
+		http://github.com/brcm/linux tags/arm-soc/for-3.18/cygnus-dts-v9
+	sti/dt
+		git://git.stlinux.com/devel/kernel/linux-sti tags/sti-dt-for-v3.19-1
+	berlin/dt
+		git://git.infradead.org/users/hesselba/linux-berlin tags/berlin-dt-3.19-1
+	at91/dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/nferre/linux-at91 tags/at91-dt
+	nomadik/dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-nomadik tags/nomadik-for-v3.19
 
 next/drivers
+	berlin/drivers
+		git://git.infradead.org/users/hesselba/linux-berlin tags/berlin-driver-3.19-1
 
 next/defconfig
 
 fixes
+	<no branch> (89fbec5b97fbcf08db3a9cd93a340f21f95d38b8)
+		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-fixes-3.18-2
+		contains next/defconfig
+	patch
+		MAINTAINERS: update bcm2835 entry
+		ARM: dts: vf610: add SD node to cosmic dts
+		dma: edma: move device registration to platform code
+		ARM: dts: zynq: Enable PL clocks for Parallella
 
