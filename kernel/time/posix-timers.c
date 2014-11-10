@@ -1035,7 +1035,6 @@ SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
 	return error;
 }
 
-#ifdef CONFIG_NTP
 SYSCALL_DEFINE2(clock_adjtime, const clockid_t, which_clock,
 		struct timex __user *, utx)
 {
@@ -1058,7 +1057,6 @@ SYSCALL_DEFINE2(clock_adjtime, const clockid_t, which_clock,
 
 	return err;
 }
-#endif
 
 SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock,
 		struct timespec __user *, tp)

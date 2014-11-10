@@ -159,8 +159,6 @@ cond_syscall(sys_uselib);
 cond_syscall(sys_fadvise64);
 cond_syscall(sys_fadvise64_64);
 cond_syscall(sys_madvise);
-cond_syscall(sys_adjtimex);
-cond_syscall(sys_clock_adjtime);
 cond_syscall(sys_ustat);
 cond_syscall(compat_sys_ustat);
 cond_syscall(sys_lstat);
