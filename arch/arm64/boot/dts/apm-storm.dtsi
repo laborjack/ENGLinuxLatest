@@ -584,8 +584,24 @@
 			status = "ok";
 			clocks = <&sata45clk 0>;
 			phys = <&phy3 0>;
-			phy-names = "sata-phy";
-		};
+		 	phy-names = "sata-phy";
+		 };
+
+                usb0: dwusb@19000000 {
+                        status = "disabled";
+                        compatible = "xhci-platform";
+                        reg =  <0x0 0x19000000 0x0 0x100000>;
+                        interrupts = <0x0 0x89 0x4>;
+                        dma-coherent;
+                };
+
+                usb1: dwusb@19800000 {
+                        status = "disabled";
+                        compatible = "xhci-platform";
+                        reg =  <0x0 0x19800000 0x0 0x100000>;
+                        interrupts = <0x0 0x8a 0x4>;
+                        dma-coherent;
+                };
 
 		rtc: rtc@10510000 {
 			compatible = "apm,xgene-rtc";
