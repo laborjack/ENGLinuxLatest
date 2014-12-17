@@ -16,6 +16,7 @@
 #include <linux/mm.h>
 #include <linux/of_pci.h>
 #include <linux/of_platform.h>
+#include <linux/of_address.h>
 #include <linux/slab.h>
 
 #include <asm/pci-bridge.h>
@@ -37,6 +38,21 @@ resource_size_t pcibios_align_resource(void *data, const struct resource *res,
 	return res->start;
 }
 
+/* Inherit root controller's dma coherent ops */
+static void pci_dma_config(struct pci_dev *dev)
+{
+	struct pci_bus *bus = dev->bus;
+	struct device *host;
+
+	while (!pci_is_root_bus(bus)) {
+		bus = bus->parent;
+	}
+
+	host = bus->dev.parent->parent;
+	if (of_dma_is_coherent(host->of_node))
+		set_arch_dma_coherent_ops(&dev->dev);
+}
+
 /*
  * Try to assign the IRQ number from DT when adding a new device
  */
@@ -44,6 +60,7 @@ int pcibios_add_device(struct pci_dev *dev)
 {
 	dev->irq = of_irq_parse_and_map_pci(dev, 0, 0);
 
+	pci_dma_config(dev);
 	return 0;
 }
 
