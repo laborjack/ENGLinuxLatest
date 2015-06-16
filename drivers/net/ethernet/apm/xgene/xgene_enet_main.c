@@ -1281,6 +1281,7 @@ static const struct of_device_id xgene_enet_of_match[] = {
 	{.compatible = "apm,xgene1-xgenet", .data = (void *)XGENE_ENET1},
 	{.compatible = "apm,xgene2-sgenet", .data = (void *)XGENE_ENET2},
 	{.compatible = "apm,xgene2-xgenet", .data = (void *)XGENE_ENET2},
+	{.compatible = "apm,xgene-shadowcat-sgenet0", .data = (void *)XGENE_ENET2},
 	{},
 };
 
