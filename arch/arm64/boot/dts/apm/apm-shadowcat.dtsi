@@ -203,6 +203,7 @@
 				0x0 0x0 0x0 0x4 &gic 0x0 0x0 0x0 0x13 0x1>;
 			clocks = <&pcie0clk 0>;
 			dma-coherent;
+			#stream-id-cells = <1>;
 		};
 
 		sata1: sata@1a000000 {
@@ -247,6 +248,7 @@
 			clocks = <&xge0clk 0>;
 			local-mac-address = [00 01 73 00 00 01];
 			phy-connection-type = "sgmii";
+			#stream-id-cells = <2>;
 		};
 
 		xgenet1: ethernet@1f620000 {
@@ -263,5 +265,52 @@
 			local-mac-address = [00 01 73 00 00 02];
 			phy-connection-type = "xgmii";
 		};
+
+               smmu {
+                      compatible = "arm,mmu-500";
+                      reg = <0x0 0x1B000000 0x0 0x40000>;
+
+                      #global-interrupts = <0x1>;
+
+                      /* This is the first context interrupt */
+                      interrupts = <0x0 0x33 0x4>,
+                                   <0x0 0xa0 0x4>,
+                                   <0x0 0xa1 0x4>,
+                                   <0x0 0xa2 0x4>,
+                                   <0x0 0xa3 0x4>,
+                                   <0x0 0xa4 0x4>,
+                                   <0x0 0xa5 0x4>,
+                                   <0x0 0xa6 0x4>,
+                                   <0x0 0xa7 0x4>,
+                                   <0x0 0xa8 0x4>,
+                                   <0x0 0xa9 0x4>,
+                                   <0x0 0xaa 0x4>,
+                                   <0x0 0xab 0x4>,
+                                   <0x0 0xac 0x4>,
+                                   <0x0 0xad 0x4>,
+                                   <0x0 0xae 0x4>,
+                                   <0x0 0xaf 0x4>,
+                                   <0x0 0xb0 0x4>,
+                                   <0x0 0xb1 0x4>,
+                                   <0x0 0xb2 0x4>,
+                                   <0x0 0xb3 0x4>,
+                                   <0x0 0xb4 0x4>,
+                                   <0x0 0xb5 0x4>,
+                                   <0x0 0xb6 0x4>,
+                                   <0x0 0xb7 0x4>,
+                                   <0x0 0xb8 0x4>,
+                                   <0x0 0xb9 0x4>,
+                                   <0x0 0xba 0x4>,
+                                   <0x0 0xbb 0x4>,
+                                   <0x0 0xbc 0x4>,
+                                   <0x0 0xbd 0x4>,
+                                   <0x0 0xbe 0x4>,
+                                   <0x0 0xbf 0x4>;
+
+
+                      mmu-masters = <&pcie0 0x0000>,
+				    <&sgenet0 0x1e00 0x1200>;
+              };
+
 	};
 };
