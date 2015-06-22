@@ -1303,8 +1303,35 @@ static bool arm_smmu_capable(enum iommu_cap cap)
 	}
 }
 
+static void xgene_get_sid(struct pci_dev *pdev, u16 *alias)
+{
+	u16 sid, port_id, bus_no, dev_no, func_no;
+
+	if (pdev->hdr_type != PCI_HEADER_TYPE_NORMAL)
+		return;
+
+	/* TBD: Check For port 1 */
+	port_id = 0;
+
+	bus_no = pdev->bus->number;
+	dev_no = PCI_SLOT(pdev->devfn);
+	func_no = PCI_FUNC(pdev->devfn);
+
+	/* SID Lower Byte: [7] = 0x1, [6] = bus, [5:3] = dev, [2:0] = FUNC */
+	/* SID Upper Byte: [5:0] = Port_id */
+	sid = ((port_id & 0x1F) << 0x11) | 0x80 | ((bus_no & 0x1) << 6) |
+				((dev_no & 0x7) << 3) | func_no;
+	*alias = sid;
+
+	/* printk("%s bus %x bevfn %x sid %x\n", __func__, pdev->bus->number,
+						pdev->devfn, *alias); */
+}
+
 static int __arm_smmu_get_pci_sid(struct pci_dev *pdev, u16 alias, void *data)
 {
+       /* TBD: Add a proper function to retrive SID based on BDF */
+	xgene_get_sid(pdev, &alias);
+
 	*((u16 *)data) = alias;
 	return 0; /* Continue walking */
 }
