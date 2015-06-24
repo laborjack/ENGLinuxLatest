@@ -146,6 +146,19 @@ static struct pci_ops xgene_pcie_ops = {
 	.write = pci_generic_config_write32,
 };
 
+static void xgene_pcie_msi_enable(struct pci_bus *bus) 
+{ 
+	struct device_node *msi_node;
+
+	msi_node = of_parse_phandle(bus->dev.of_node, "msi-parent", 0); 
+
+	if (!msi_node) 
+		return; 
+
+	bus->msi = of_pci_find_msi_chip_by_node(msi_node);
+
+} 
+
 static u64 xgene_pcie_set_ib_mask(void __iomem *csr_base, u32 addr,
 				  u32 flags, u64 size)
 {
@@ -504,6 +517,7 @@ static int xgene_pcie_probe_bridge(struct platform_device *pdev)
 	if (!bus)
 		return -ENOMEM;
 
+	xgene_pcie_msi_enable(bus);
 	pci_scan_child_bus(bus);
 	pci_assign_unassigned_bus_resources(bus);
 	pci_bus_add_devices(bus);
