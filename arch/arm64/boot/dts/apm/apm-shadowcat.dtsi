@@ -89,6 +89,87 @@
 		      <0x0 0x780A0000 0x0 0x20000>,	/* GIC CPU */
 		      <0x0 0x780C0000 0x0 0x10000>,	/* GIC VCPU Control */
 		      <0x0 0x780E0000 0x0 0x20000>;	/* GIC VCPU */
+
+               v2m0: v2m@0x79000000 {
+                       compatible = "arm,gic-v2m-frame", "apm,gic-v2m-xgene2";
+                       msi-controller;
+                       reg = <0x0 0x0 0x0 0x10000>;
+               };
+               v2m1: v2m@0x79010000 {
+                       compatible = "arm,gic-v2m-frame", "apm,gic-v2m-xgene2";
+                       msi-controller;
+                       reg = <0x0 0x10000 0x0 0x10000>;
+               };
+               v2m2: v2m@0x79020000 {
+                       compatible = "arm,gic-v2m-frame", "apm,gic-v2m-xgene2";
+                       msi-controller;
+                       reg = <0x0 0x20000 0x0 0x10000>;
+               };
+               v2m3: v2m@0x79030000 {
+                       compatible = "arm,gic-v2m-frame", "apm,gic-v2m-xgene2";
+                       msi-controller;
+                       reg = <0x0 0x30000 0x0 0x10000>;
+               };
+               v2m4: v2m@0x79040000 {
+                       compatible = "arm,gic-v2m-frame", "apm,gic-v2m-xgene2";
+                       msi-controller;
+                       reg = <0x0 0x40000 0x0 0x10000>;
+               };
+               v2m5: v2m@0x79050000 {
+                       compatible = "arm,gic-v2m-frame", "apm,gic-v2m-xgene2";
+                       msi-controller;
+                       reg = <0x0 0x50000 0x0 0x10000>;
+               };
+               v2m6: v2m@0x79060000 {
+                       compatible = "arm,gic-v2m-frame", "apm,gic-v2m-xgene2";
+                       msi-controller;
+                       reg = <0x0 0x60000 0x0 0x10000>;
+               };
+               v2m7: v2m@0x79070000 {
+                       compatible = "arm,gic-v2m-frame", "apm,gic-v2m-xgene2";
+                       msi-controller;
+                       reg = <0x0 0x70000 0x0 0x10000>;
+               };
+               v2m8: v2m@0x79080000 {
+                       compatible = "arm,gic-v2m-frame", "apm,gic-v2m-xgene2";
+                       msi-controller;
+                       reg = <0x0 0x80000 0x0 0x10000>;
+               };
+               v2m9: v2m@0x79090000 {
+                       compatible = "arm,gic-v2m-frame", "apm,gic-v2m-xgene2";
+                       msi-controller;
+                       reg = <0x0 0x90000 0x0 0x10000>;
+               };
+               v2m10: v2m@0x790A0000 {
+                       compatible = "arm,gic-v2m-frame", "apm,gic-v2m-xgene2";
+                       msi-controller;
+                       reg = <0x0 0xA0000 0x0 0x10000>;
+               };
+               v2m11: v2m@0x790B0000 {
+                       compatible = "arm,gic-v2m-frame", "apm,gic-v2m-xgene2";
+                       msi-controller;
+                       reg = <0x0 0xB0000 0x0 0x10000>;
+               };
+               v2m12: v2m@0x790C0000 {
+                       compatible = "arm,gic-v2m-frame", "apm,gic-v2m-xgene2";
+                       msi-controller;
+                       reg = <0x0 0xC0000 0x0 0x10000>;
+               };
+               v2m13: v2m@0x790D0000 {
+                       compatible = "arm,gic-v2m-frame", "apm,gic-v2m-xgene2";
+                       msi-controller;
+                       reg = <0x0 0xD0000 0x0 0x10000>;
+               };
+               v2m14: v2m@0x790E0000 {
+                       compatible = "arm,gic-v2m-frame", "apm,gic-v2m-xgene2";
+                       msi-controller;
+                       reg = <0x0 0xE0000 0x0 0x10000>;
+               };
+               v2m15: v2m@0x790F0000 {
+                       compatible = "arm,gic-v2m-frame", "apm,gic-v2m-xgene2";
+                       msi-controller;
+                       reg = <0x0 0xF0000 0x0 0x10000>;
+               };
 	};
 
 	pmu {
@@ -203,6 +284,7 @@
 				0x0 0x0 0x0 0x4 &gic 0x0 0x0 0x0 0x13 0x1>;
 			clocks = <&pcie0clk 0>;
 			dma-coherent;
+			msi-parent = <&v2m0>;
 			#stream-id-cells = <1>;
 		};
 

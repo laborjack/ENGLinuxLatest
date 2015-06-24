@@ -42,6 +42,7 @@
 	       (((x) >> V2M_MSI_TYPER_BASE_SHIFT) & V2M_MSI_TYPER_BASE_MASK)
 
 #define V2M_MSI_TYPER_NUM_SPI(x)       ((x) & V2M_MSI_TYPER_NUM_MASK)
+#define	V2M_MSI_DATA_USE_OFFSET		0x00000001
 
 struct v2m_data {
 	spinlock_t msi_cnt_lock;
@@ -52,6 +53,7 @@ struct v2m_data {
 	u32 nr_spis;		/* The number of SPIs for MSIs */
 	unsigned long *bm;	/* MSI vector bitmap */
 	struct irq_domain *domain;
+	u32 v2m_flags;
 };
 
 static void gicv2m_mask_msi_irq(struct irq_data *d)
@@ -100,6 +102,17 @@ static void gicv2m_compose_msi_msg(struct irq_data *data, struct msi_msg *msg)
 	msg->address_hi = (u32) (addr >> 32);
 	msg->address_lo = (u32) (addr);
 	msg->data = data->hwirq;
+
+	/*
+	 * APM X-Gene 2 initial version with GICv2m implementation 
+	 * has an erratum where the MSI data needs to be the offset
+	 * from the spi_start in order to trigger the correct MSI interrupt.
+	 * This is different from the standard GICv2m implementation where
+	 * the MSI data is the absolute value within the range from
+	 * spi_start to (spi_start + num_spis).
+	 */
+	if (v2m->v2m_flags && V2M_MSI_DATA_USE_OFFSET)
+		msg->data = data->hwirq - v2m->spi_start;
 }
 
 static struct irq_chip gicv2m_irq_chip = {
@@ -253,6 +266,10 @@ static int __init gicv2m_init_one(struct device_node *node,
 		ret = -EINVAL;
 		goto err_iounmap;
 	}
+
+	v2m->v2m_flags = 0;
+	if (of_device_is_compatible(node, "apm,gic-v2m-xgene2"))
+		v2m->v2m_flags |= V2M_MSI_DATA_USE_OFFSET;
 
 	v2m->bm = kzalloc(sizeof(long) * BITS_TO_LONGS(v2m->nr_spis),
 			  GFP_KERNEL);
