@@ -202,8 +202,10 @@ static int vfio_intx_set_signal(struct vfio_pci_device *vdev, int fd)
 
 	vdev->ctx[0].trigger = trigger;
 
+#if 0
 	if (!vdev->pci_2_3)
 		irqflags = 0;
+#endif
 
 	ret = request_irq(pdev->irq, vfio_intx_handler,
 			  irqflags, vdev->ctx[0].name, vdev);
