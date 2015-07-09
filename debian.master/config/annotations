@@ -2475,8 +2475,8 @@ CONFIG_IOSCHED_CFQ				y
 CONFIG_CFQ_GROUP_IOSCHED			y
 
 # Menu: Enable the block layer >> IO Schedulers >> Default I/O scheduler
-CONFIG_DEFAULT_DEADLINE				p policy<{'amd64': 'y', 'arm64': 'y', 'armhf': 'y', 'i386': 'y', 'powerpc': 'y', 'ppc64el': 'n'}>
-CONFIG_DEFAULT_CFQ				p policy<{'amd64': 'n', 'arm64': 'n', 'armhf': 'n', 'i386': 'n', 'powerpc': 'n', 'ppc64el': 'y'}>
+CONFIG_DEFAULT_DEADLINE				p policy<{'amd64': 'y', 'arm64': 'y', 'armhf': 'y', 'i386': 'y', 'powerpc': 'y', 'ppc64el': 'y'}>
+CONFIG_DEFAULT_CFQ				p policy<{'amd64': 'n', 'arm64': 'n', 'armhf': 'n', 'i386': 'n', 'powerpc': 'n', 'ppc64el': 'n'}>
 
 # Menu: Enable the block layer >> Partition Types
 set +tree 'Enable the block layer>>Partition Types' ?pattern _PARTITION$ !flag EXPERIMENTAL         = y
