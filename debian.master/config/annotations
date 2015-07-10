@@ -3820,7 +3820,7 @@ CONFIG_GART_IOMMU                               p policy<{'amd64': 'y'}>
 CONFIG_CALGARY_IOMMU                            p policy<{'amd64': 'y'}>
 CONFIG_CALGARY_IOMMU_ENABLED_BY_DEFAULT         p policy<{'amd64': 'y'}>
 CONFIG_X86_REROUTE_FOR_BROKEN_BOOT_IRQS         p policy<{'amd64': 'y', 'i386': 'y'}>
-CONFIG_VM86                                     p policy<{'i386': 'y'}>
+CONFIG_VM86                                     p policy<{'i386': 'n'}>
 CONFIG_X86_16BIT                                p policy<{'amd64': 'y', 'i386': 'y'}>
 CONFIG_X86_VSYSCALL_EMULATION                   p policy<{'amd64': 'y'}>
 CONFIG_TOSHIBA                                  p policy<{'i386': 'n'}>
