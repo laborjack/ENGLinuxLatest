@@ -640,7 +640,7 @@ CONFIG_DRM_EXYNOS_IPP				p policy<{'armhf': 'n'}>
 
 # Menu: Device Drivers >> Graphics support >> Direct Rendering Manager >> Direct Rendering Manager (XFree86 4.1.0 and higher DRI support) >> Intel 8xx/9xx/G3x/G4x/HD Graphics
 CONFIG_DRM_I915_FBDEV				y
-CONFIG_DRM_I915_PRELIMINARY_HW_SUPPORT		y
+CONFIG_DRM_I915_PRELIMINARY_HW_SUPPORT		n note<LP:1473319>
 
 # Menu: Device Drivers >> Graphics support >> Direct Rendering Manager >> Direct Rendering Manager (XFree86 4.1.0 and higher DRI support) >> Intel GMA5/600 KMS Framebuffer
 CONFIG_DRM_GMA600				y
