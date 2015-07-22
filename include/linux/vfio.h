@@ -52,6 +52,12 @@ extern void *vfio_del_group_dev(struct device *dev);
 extern struct vfio_device *vfio_device_get_from_dev(struct device *dev);
 extern void vfio_device_put(struct vfio_device *device);
 extern void *vfio_device_data(struct vfio_device *device);
+extern int vfio_device_iommu_map(struct vfio_device *device,
+					unsigned long iova,
+					phys_addr_t paddr,
+					size_t size, int prot);
+extern void vfio_device_iommu_unmap(struct vfio_device *device,
+				    unsigned long iova, size_t size);
 
 /**
  * struct vfio_iommu_driver_ops - VFIO IOMMU driver callbacks
@@ -72,7 +78,10 @@ struct vfio_iommu_driver_ops {
 					struct iommu_group *group);
 	void		(*detach_group)(void *iommu_data,
 					struct iommu_group *group);
-
+	int		(*device_map)(void *iommu_data, unsigned long iova,
+				      phys_addr_t paddr, size_t size, int prot);
+	void		(*device_unmap)(void *iommu_data, unsigned long iova,
+					size_t size);
 };
 
 extern int vfio_register_iommu_driver(const struct vfio_iommu_driver_ops *ops);

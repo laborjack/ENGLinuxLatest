@@ -143,6 +143,35 @@ void vfio_unregister_iommu_driver(const struct vfio_iommu_driver_ops *ops)
 }
 EXPORT_SYMBOL_GPL(vfio_unregister_iommu_driver);
 
+int vfio_device_iommu_map(struct vfio_device *device, unsigned long iova,
+			  phys_addr_t paddr, size_t size, int prot)
+{
+	struct vfio_container *container = device->group->container;
+	const struct vfio_iommu_driver_ops *ops = container->iommu_driver->ops;
+	int ret;
+
+	if (!ops->device_map)
+		return -EINVAL;
+
+	ret = ops->device_map(container->iommu_data, iova, paddr, size, prot);
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(vfio_device_iommu_map);
+
+void vfio_device_iommu_unmap(struct vfio_device *device, unsigned long iova,
+			    size_t size)
+{
+	struct vfio_container *container = device->group->container;
+	const struct vfio_iommu_driver_ops *ops = container->iommu_driver->ops;
+
+	if (!ops->device_unmap)
+		return;
+
+	ops->device_unmap(container->iommu_data, iova, size);
+}
+EXPORT_SYMBOL_GPL(vfio_device_iommu_unmap);
+
 /**
  * Group minor allocation/free - both called with vfio.group_lock held
  */

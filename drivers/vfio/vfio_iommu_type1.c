@@ -1025,6 +1025,64 @@ static long vfio_iommu_type1_ioctl(void *iommu_data,
 	return -ENOTTY;
 }
 
+static int vfio_iommu_type1_device_map(void *iommu_data, unsigned long iova,
+		phys_addr_t paddr, size_t size,
+		int prot)
+{
+	struct vfio_iommu *iommu = iommu_data;
+	struct vfio_domain *d;
+	int ret;
+
+	mutex_lock(&iommu->lock);
+
+	list_for_each_entry(d, &iommu->domain_list, next) {
+
+		if (iommu_iova_to_phys(d->domain, iova))
+			continue;
+
+		ret = iommu_map(d->domain, iova, paddr,
+				size, prot | d->prot);
+
+		if (ret) {
+			if (ret != -EBUSY)
+				goto unwind;
+		}
+
+		cond_resched();
+	}
+
+	mutex_unlock(&iommu->lock);
+
+	return 0;
+
+unwind:
+	list_for_each_entry_continue_reverse(d, &iommu->domain_list, next)
+		iommu_unmap(d->domain, iova, size);
+
+	mutex_unlock(&iommu->lock);
+	return ret;
+}
+
+static void vfio_iommu_type1_device_unmap(void *iommu_data, unsigned long iova,
+					 size_t size)
+{
+	struct vfio_iommu *iommu = iommu_data;
+	struct vfio_domain *d;
+
+	mutex_lock(&iommu->lock);
+
+	list_for_each_entry(d, &iommu->domain_list, next) {
+
+		if (!iommu_iova_to_phys(d->domain, iova))
+			continue;
+
+		iommu_unmap(d->domain, iova, size);
+		cond_resched();
+	}
+
+	mutex_unlock(&iommu->lock);
+}
+
 static const struct vfio_iommu_driver_ops vfio_iommu_driver_ops_type1 = {
 	.name		= "vfio-iommu-type1",
 	.owner		= THIS_MODULE,
@@ -1033,6 +1091,8 @@ static const struct vfio_iommu_driver_ops vfio_iommu_driver_ops_type1 = {
 	.ioctl		= vfio_iommu_type1_ioctl,
 	.attach_group	= vfio_iommu_type1_attach_group,
 	.detach_group	= vfio_iommu_type1_detach_group,
+	.device_map	= vfio_iommu_type1_device_map,
+	.device_unmap	= vfio_iommu_type1_device_unmap,
 };
 
 static int __init vfio_iommu_type1_init(void)
