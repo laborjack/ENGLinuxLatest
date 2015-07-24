@@ -784,6 +784,38 @@ hot_reset_release:
 
 		kfree(groups);
 		return ret;
+	} else if (cmd == VFIO_DEVICE_PCI_MSI_VIRT_DOORBELL) {
+		struct vfio_pci_msi_virt_doorbell hdr;
+		u64 *data = NULL;
+		int ret = 0;
+		size_t size = sizeof(uint64_t);
+
+		minsz = offsetofend(struct vfio_pci_msi_virt_doorbell, count);
+
+		if (copy_from_user(&hdr, (void __user *)arg, minsz))
+			return -EFAULT;
+
+		if (hdr.argsz < minsz)
+			return -EINVAL;
+
+		if (hdr.argsz - minsz < hdr.count * size)
+			return -EINVAL;
+
+		data = memdup_user((void __user *)(arg + minsz),
+				hdr.count * size);
+		if (IS_ERR(data))
+			return PTR_ERR(data);
+
+		mutex_lock(&vdev->igate);
+
+		ret = vfio_pci_msi_virt_doorbell(vdev, hdr.flags,
+				hdr.start, hdr.count, data);
+
+		mutex_unlock(&vdev->igate);
+
+		kfree(data);
+
+		return ret;
 	}
 
 	return -ENOTTY;

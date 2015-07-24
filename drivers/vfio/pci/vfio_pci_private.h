@@ -73,6 +73,9 @@ extern void vfio_pci_intx_unmask(struct vfio_pci_device *vdev);
 extern int vfio_pci_set_irqs_ioctl(struct vfio_pci_device *vdev,
 				   uint32_t flags, unsigned index,
 				   unsigned start, unsigned count, void *data);
+extern int vfio_pci_msi_virt_doorbell(struct vfio_pci_device *vdev,
+				   uint32_t flags, unsigned start,
+				   unsigned count, void *data);
 
 extern ssize_t vfio_pci_config_rw(struct vfio_pci_device *vdev,
 				  char __user *buf, size_t count,

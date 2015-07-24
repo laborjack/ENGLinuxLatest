@@ -377,6 +377,25 @@ struct vfio_pci_hot_reset {
 
 #define VFIO_DEVICE_PCI_HOT_RESET	_IO(VFIO_TYPE, VFIO_BASE + 13)
 
+/**
+ * VFIO_DEVICE_PCI_MSI_VIRT_DOORBELL - _IOW(VFIO_TYPE, VFIO_BASE + 14,
+ *					   struct vfio_pci_msi_virt_doorbell)
+ *
+ * Return: 0 on success, -errno on failure.
+ */
+struct vfio_pci_msi_virt_doorbell {
+	__u32   argsz;
+	__u32   flags;
+#define VFIO_PCI_MSI_CLEAR_DOORBELL	(1 << 0) /* Remove virtual doorbell */
+#define VFIO_PCI_MSI_SET_DOORBELL	(1 << 1) /* Set virtual doorbell */
+#define VFIO_PCI_IS_MSIX		(1 << 2) /* Is MSI-X ? */
+	__u32	start;
+	__u32	count;
+	__u64	data[];
+};
+
+#define VFIO_DEVICE_PCI_MSI_VIRT_DOORBELL       _IO(VFIO_TYPE, VFIO_BASE + 14)
+
 /* -------- API for Type1 VFIO IOMMU -------- */
 
 /**

@@ -16,6 +16,7 @@
 #include <linux/device.h>
 #include <linux/interrupt.h>
 #include <linux/eventfd.h>
+#include <linux/irq.h>
 #include <linux/msi.h>
 #include <linux/pci.h>
 #include <linux/file.h>
@@ -352,8 +353,10 @@ static int vfio_msi_set_vector_signal(struct vfio_pci_device *vdev,
 		pci_write_msi_msg(irq, &msg);
 	}
 
+
 	ret = request_irq(irq, vfio_msihandler, 0,
 			  vdev->ctx[vector].name, trigger);
+
 	if (ret) {
 		kfree(vdev->ctx[vector].name);
 		eventfd_ctx_put(trigger);
@@ -673,3 +676,64 @@ int vfio_pci_set_irqs_ioctl(struct vfio_pci_device *vdev, uint32_t flags,
 
 	return func(vdev, index, start, count, flags, data);
 }
+
+int vfio_pci_msi_virt_doorbell(struct vfio_pci_device *vdev, uint32_t flags,
+			    unsigned start, unsigned count,
+			    void *data)
+{
+	struct pci_dev *pdev = vdev->pdev;
+	int irq;
+	bool msix = flags & VFIO_PCI_IS_MSIX;
+	struct msi_msg msg;
+	struct irq_data *d;
+	unsigned long msi_paddr, msi_iova;
+	struct vfio_device *device;
+	int ret;
+	int i, j;
+
+	for (i = 0, j = start; i < count && !ret; i++, j++) {
+
+		device = vfio_device_get_from_dev(&pdev->dev);
+		irq = msix ? vdev->msix[j].vector :
+					pdev->irq + j;
+
+		if (flags & VFIO_PCI_MSI_SET_DOORBELL) {
+			/* Get the MSI message to extract Physical Address */
+			d = irq_get_irq_data(irq);
+			irq_chip_compose_msi_msg(d, &msg);
+			msi_paddr = (msg.address_hi << 31) | msg.address_lo;
+		} else {
+			/*
+			 * Restore the cached value of the message prior
+			 * to the virtual doorbell setting.
+			 */
+			get_cached_msi_msg(irq, &msg);
+		}
+
+		/* MSI IPA/GPA i.e. virtual doorbell address */
+		msi_iova = (unsigned long) ((unsigned long *) data)[i];
+
+		if (flags & VFIO_PCI_MSI_SET_DOORBELL) {
+			ret = vfio_device_iommu_map(device,
+						    (msi_iova & PAGE_MASK),
+						    (msi_paddr & PAGE_MASK),
+						    PAGE_SIZE,
+						    IOMMU_READ | IOMMU_WRITE |
+						    IOMMU_CACHE);
+
+			/* Fill MSI GPA/IPA as a new MSI doorbell address. */
+			msg.address_hi = msi_iova << 31;
+			msg.address_lo = msi_iova & 0xFFFFFFFF;
+		} else if (flags & VFIO_PCI_MSI_CLEAR_DOORBELL) {
+			vfio_device_iommu_unmap(device, (msi_iova & PAGE_MASK),
+						PAGE_SIZE);
+		} else {
+			return -EINVAL;
+		}
+
+		pci_write_msi_msg(irq, &msg);
+	}
+
+	return 0;
+}
+
