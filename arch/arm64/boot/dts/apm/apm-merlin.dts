@@ -1,0 +1,113 @@
+/*
+ * dts file for AppliedMicro (APM) Merlin Board
+ *
+ * Copyright (C) 2014, Applied Micro Circuits Corporation
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ */
+
+/dts-v1/;
+
+/include/ "apm-shadowcat.dtsi"
+
+/ {
+	model = "APM X-Gene Merlin board";
+	compatible = "apm,merlin", "apm,xgene-shadowcat";
+
+	chosen { };
+
+	memory {
+		device_type = "memory";
+		reg = < 0x1 0x00000000 0x0 0x80000000 >; /* Updated by bootloader */
+	};
+};
+
+&serial0 {
+	status = "ok";
+};
+
+&sata1 {
+	status = "ok";
+};
+
+&sata2 { 
+	status = "ok";
+};
+
+&sata3 {
+	status = "ok";
+};
+
+&spi2 {
+	status = "ok";
+
+	flash: n25q256a@0 {
+	status = "ok";
+	cell-index = <0>;
+	#address-cells = <1>;
+	#size-cells = <1>;
+		compatible = "n25q256a";
+		reg = <0>;
+		spi-max-frequency = <15000000>;
+		spi-cpha;
+		spi-cpol;
+
+		partition@0x00000000 {
+			label =	"Boot loader";
+			reg = <0x00000000 0x01000000>;
+		};
+		partition@0x01000000 {
+			label = "n25q256a-data";
+			reg = <0x01000000 0x01000000>;
+		};
+	};
+};
+
+&rdmahv0 {
+	status = "ok";
+};
+
+&rdmahv1 {
+	status = "ok";
+};
+
+&rdma {
+	status = "ok";
+};
+
+&mmc0 {
+	status = "ok";
+};
+
+&sgenet0 {
+        status = "ok";
+};
+
+&xgenet1 {
+        status = "ok";
+};
+
+&pcie0clk {
+	status = "ok";
+};
+
+&pcie0 {
+	status = "ok";
+};
+&mdio {
+	sgenet0phy: sgenet0phy@ {
+		reg = <0x0>;
+	};
+	/*
+	sgenet1phy: sgenet1phy@2 {
+		reg = <0x2>;
+	};	
+	*/
+};
+
+&smmu {
+	status = "ok";
+};
