@@ -1304,8 +1304,51 @@ static bool arm_smmu_capable(enum iommu_cap cap)
 	}
 }
 
+/* This function has a X-Gene2 specific code to generate Stream-ID
+ * from PCIe RequestorID. This code assumes mode 2 of SID generation.
+ * Till the time open-source community agrees on the solution about 
+ * "how to specify SID to RID mapping in DT ?", we have to live with this code.
+ */
+static void xgene_get_sid(struct pci_dev *pdev, u16 *alias)
+{
+        u32 port_id;
+        u16 sid, bus_no, dev_no, func_no;
+        struct pci_bus *bus;
+        struct device *host;
+        const struct device_node *of_node;
+
+        if (pdev->hdr_type != PCI_HEADER_TYPE_NORMAL)
+                return;
+
+        bus = pdev->bus;
+        while (!pci_is_root_bus(bus)) {
+                bus = bus->parent;
+        }
+
+        host = bus->dev.parent->parent;
+        of_node = host->of_node;
+
+        if (of_property_read_u32(of_node, "hw-port-id", &port_id)) {
+                printk("%s: %d: Failed to determine pcie host port\n",
+                        __func__, __LINE__);
+                return;
+        }
+
+        bus_no = pdev->bus->number;
+        dev_no = PCI_SLOT(pdev->devfn);
+        func_no = PCI_FUNC(pdev->devfn);
+
+        /* SID Lower Byte: [7] = 0x1, [6] = bus, [5:3] = dev, [2:0] = FUNC */
+        /* SID Upper Byte: [6:2] = Port_id */
+        sid = ((port_id & 0x1F) << 10) | 0x80 | ((bus_no & 0x1) << 6) |
+                                ((dev_no & 0x7) << 3) | func_no;
+        *alias = sid;
+}
+
 static int __arm_smmu_get_pci_sid(struct pci_dev *pdev, u16 alias, void *data)
 {
+	xgene_get_sid(pdev, &alias);
+
 	*((u16 *)data) = alias;
 	return 0; /* Continue walking */
 }
