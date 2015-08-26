@@ -43,6 +43,9 @@
 
 #define V2M_MSI_TYPER_NUM_SPI(x)       ((x) & V2M_MSI_TYPER_NUM_MASK)
 
+/* Flag to indicate APM X-Gene GICv2m */
+#define XGENE2_GICV2M_V1		0x00000001
+
 struct v2m_data {
 	spinlock_t msi_cnt_lock;
 	struct msi_controller mchip;
@@ -52,6 +55,7 @@ struct v2m_data {
 	u32 nr_spis;		/* The number of SPIs for MSIs */
 	unsigned long *bm;	/* MSI vector bitmap */
 	struct irq_domain *domain;
+	u32 v2m_flags;		/* platform specific flags */
 };
 
 static void gicv2m_mask_msi_irq(struct irq_data *d)
@@ -97,9 +101,29 @@ static void gicv2m_compose_msi_msg(struct irq_data *data, struct msi_msg *msg)
 	struct v2m_data *v2m = irq_data_get_irq_chip_data(data);
 	phys_addr_t addr = v2m->res.start + V2M_MSI_SETSPI_NS;
 
+	/* 
+	 * APM X-Gene 2 GICv2m has 16 v2m frames with 8 SPIs and 64KB
+	 * termination space for each frame.
+	 * In this implementation, all 16 v2m frames are considered
+	 * 'single' v2m frame with total 128 SPIs and holes in termination
+	 * space.
+	 */
+	if (v2m->v2m_flags & XGENE2_GICV2M_V1)
+		addr += ((data->hwirq - v2m->spi_start) / 8) * 0x10000;
 	msg->address_hi = (u32) (addr >> 32);
 	msg->address_lo = (u32) (addr);
 	msg->data = data->hwirq;
+
+	/*
+	 * APM X-Gene 2 GICv2m implementation has an erratum where
+	 * the MSI data needs to be the offset from the spi_start
+	 * in order to trigger the correct MSI interrupt. This is
+	 * different from the standard GICv2m implementation where
+	 * the MSI data is the absolute value within the range from
+	 * spi_start to (spi_start + num_spis).
+	 */
+	if (v2m->v2m_flags & XGENE2_GICV2M_V1)
+		msg->data = (data->hwirq - v2m->spi_start) % 8;
 }
 
 static struct irq_chip gicv2m_irq_chip = {
@@ -224,6 +248,13 @@ static int __init gicv2m_init_one(struct device_node *node,
 		pr_err("Failed to allocate struct v2m_data.\n");
 		return -ENOMEM;
 	}
+
+	v2m->v2m_flags = 0;
+	if (of_device_is_compatible(node, "apm,gic-v2m"))
+		v2m->v2m_flags |= XGENE2_GICV2M_V1;
+
+	if (v2m->v2m_flags & XGENE2_GICV2M_V1)
+		printk("X-Gene 2 GICv2m erratum workaround activated\n");
 
 	ret = of_address_to_resource(node, 0, &v2m->res);
 	if (ret) {
