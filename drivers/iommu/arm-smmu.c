@@ -83,6 +83,11 @@
 #define sCR0_BSU_SHIFT			14
 #define sCR0_BSU_MASK			0x3
 
+#define ARM_SMMU_GR0_ACR                0x10
+#define ACR_SMTNMB_TLBEN                (1 << 8)
+#define ACR_MMUDISB_TLBEN               (1 << 9)
+#define ACR_S2CRB_TLBEN                 (1 <<10)
+
 /* Identification registers */
 #define ARM_SMMU_GR0_ID0		0x20
 #define ARM_SMMU_GR0_ID1		0x24
@@ -1529,6 +1534,11 @@ static void arm_smmu_device_reset(struct arm_smmu_device *smmu)
 	/* Invalidate the TLB, just in case */
 	writel_relaxed(0, gr0_base + ARM_SMMU_GR0_TLBIALLH);
 	writel_relaxed(0, gr0_base + ARM_SMMU_GR0_TLBIALLNSNH);
+
+	/* This is X-Gene specific ACR setting */
+	reg = readl_relaxed(ARM_SMMU_GR0_NS(smmu) + ARM_SMMU_GR0_ACR);
+	reg |=  ACR_SMTNMB_TLBEN | ACR_MMUDISB_TLBEN | ACR_S2CRB_TLBEN;
+	writel(reg, ARM_SMMU_GR0_NS(smmu) + ARM_SMMU_GR0_ACR);
 
 	reg = readl_relaxed(ARM_SMMU_GR0_NS(smmu) + ARM_SMMU_GR0_sCR0);
 
