@@ -1459,24 +1459,27 @@ static struct inode *shmem_get_inode(struct super_block *sb, const struct inode 
 			break;
 		}
 
-		if (!sbinfo->idr_nouse) {
-			/* inum 0 and 1 are unused */
-			mutex_lock(&sbinfo->idr_lock);
-			ino = idr_alloc(&sbinfo->idr, inode, 2, INT_MAX,
-					GFP_NOFS);
-			if (ino > 0) {
-				inode->i_ino = ino;
-				mutex_unlock(&sbinfo->idr_lock);
-				__insert_inode_hash(inode, inode->i_ino);
-			} else {
-				inode->i_ino = 0;
-				mutex_unlock(&sbinfo->idr_lock);
-				iput(inode);
-				/* shmem_free_inode() will be called */
-				inode = NULL;
-			}
-		} else
-			inode->i_ino = get_next_ino();
+
+		if (shm_mnt && shm_mnt->mnt_sb == sb) {
+			if (!sbinfo->idr_nouse) {
+				/* inum 0 and 1 are unused */
+				mutex_lock(&sbinfo->idr_lock);
+				ino = idr_alloc(&sbinfo->idr, inode, 2, INT_MAX,
+						GFP_NOFS);
+				if (ino > 0) {
+					inode->i_ino = ino;
+					mutex_unlock(&sbinfo->idr_lock);
+					__insert_inode_hash(inode, inode->i_ino);
+				} else {
+					inode->i_ino = 0;
+					mutex_unlock(&sbinfo->idr_lock);
+					iput(inode);
+					/* shmem_free_inode() will be called */
+					inode = NULL;
+				}
+			} else
+				inode->i_ino = get_next_ino();
+		}
 	} else
 		shmem_free_inode(sb);
 	return inode;
